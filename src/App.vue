@@ -2,9 +2,11 @@
 	<v-app>
 
 		<v-content>
-			<transition name="fade" mode="out-in">
-				<router-view :key="$route.name + ($route.params.type || '')"/>
-			</transition>
+			<v-container fluid>
+				<transition name="fade" mode="out-in">
+					<router-view :key="$route.name + ($route.params.type || '')"/>
+				</transition>
+			</v-container>
 		</v-content>
 
 	</v-app>
@@ -15,8 +17,10 @@
 export default {
 	name: "App",
 
-	created() {
-		this.$store.dispatch('setup/init');
+	async created() {
+		await this.$store.dispatch('setup/init');
+		this.$store.dispatch('checkins/run');
+		this.$vuetify.theme.dark = false;
 	}
 };
 </script>
