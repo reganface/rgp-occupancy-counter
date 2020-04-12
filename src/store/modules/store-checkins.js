@@ -1,7 +1,8 @@
 import config from '@/services/db.js';
 import { forEach } from 'lodash';
-import { format } from 'date-fns';
+import { format, subHours } from 'date-fns';
 import { get } from '@/services/ajax.js';
+import { resolve, reject } from 'q';
 
 export const namespaced = true;
 
@@ -10,7 +11,7 @@ export const state = {
 	checkins: {},
 	in_gym_only: true,
 	refresh_interval: null,
-	refresh_rate: 60000
+	refresh_rate: 20000
 };
 
 
@@ -63,7 +64,8 @@ export const actions = {
 		let params = {
 			//startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00')
 			startDateTime: '2020-02-01 00:00:00',
-			endDateTime: '2020-02-01 08:10:00',
+			//endDateTime: '2020-02-01 08:10:00',
+			endDateTime: format(subHours(new Date(), 10), "2020-02-01 HH:mm:ss"),
 			startId: last_checkin_id
 		};
 		let result = await get(`/checkins/facility/${location_tag}`, params);
@@ -72,6 +74,7 @@ export const actions = {
 			checkins[value.checkinId] = {
 				checkin_id: value.checkinId,
 				customer_guid: value.customerGuid,
+				name: value.remoteCustomerName ? value.remoteCustomerName : "",
 				status: value.status,
 				details: value.details,
 				level: value.level,
@@ -80,6 +83,44 @@ export const actions = {
 			};
 		});
 		store.commit('UPDATE_CHECKINS', checkins);
+		store.dispatch('lookup_new_names', checkins);
+	},
+
+	lookup_new_names: async (store, checkins) => {
+		let checkins_array = Object.values(checkins);
+		let need_names = checkins_array.filter(checkin => checkin.customer_guid && !checkin.name);
+		let count = need_names.length;
+		let lookup_delay = count > 10 ? 4500 : 1500;
+
+		// loop through all checkins that need a name
+		for (const need_name of need_names) {
+			try {
+				await store.dispatch('get_name', need_name);
+				await delay(lookup_delay);
+			} catch (err) {
+				// most likely hit the API rate limit, extra delay
+				await delay(65000);
+			}
+		}
+	},
+
+	get_name: async (store, checkin) => {
+		let error = false;
+		try {
+			let result = await get(`/customers/${checkin.customer_guid}`);	// fetch name from api
+			let customer = result.customer;
+			checkin.name = `${customer.lastName}, ${customer.firstName} ${customer.middleName}`.trim();
+		} catch (err) {
+			console.log(err);
+			checkin.name = "####";
+			error = true;
+		} finally {
+			let checkin_object = { [checkin.checkin_id]: checkin };		// turn array into object in order to update the global checkin object
+			store.commit('UPDATE_CHECKINS', checkin_object);
+		}
+
+		if (error) return reject();
+		return resolve();
 	},
 
 	checkout: (store, data) => {
@@ -119,3 +160,8 @@ export const mutations = {
 		state.in_gym_only = value;
 	}
 };
+
+
+function delay(x) {
+	return new Promise(resolve => setTimeout(resolve, x));
+}

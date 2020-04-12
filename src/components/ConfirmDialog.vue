@@ -4,7 +4,7 @@
 			<slot v-bind:on="on" name="activator" />
 		</template>
 		<v-card>
-			<v-card-title>
+			<v-card-title class="subtitle-1">
 				<slot name="title" />
 			</v-card-title>
 			<v-card-actions>

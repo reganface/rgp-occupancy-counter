@@ -5,7 +5,7 @@
 			<v-switch v-model="in_gym_only" label="Only show customers still in the gym" />
 		</div>
 
-		<v-data-table :items="checkins.list" class="elevation-1" dense>
+		<v-data-table :items="checkins.list" class="elevation-1" disable-pagination dense>
 			<template v-slot:header>
 				<thead>
 					<tr>
@@ -24,27 +24,35 @@
 					<template>
 						<tr v-for="item in items" :key="item.checkin_id" :class="{inactive: item.time_out}" class="list-complete-item">
 							<td>{{ item.postdate | checkin_time }}</td>
-							<td>{{ item.customer_guid }}</td>
+							<td>
+								<div v-if="item.name == '####'" class="red--text font-italic font-weight-light">
+									Error loading name
+									<v-btn @click="load_name(item)" icon small>
+										<v-icon>mdi-refresh</v-icon>
+									</v-btn>
+								</div>
+								<div v-else>{{ item.name }}</div>
+							</td>
 							<td>{{ item.status }}</td>
 							<td>{{ item.details }}</td>
-							<td>{{ time_in_gym(item) }}</td>
+							<td :class="{'red--text': check_duration(item)}">{{ time_in_gym(item) }}</td>
 							<td class="text-center">
 								<transition name="fade" mode="out-in">
 									<confirm-dialog v-if="!item.time_out" @confirm="checkout(item)">
 										<template v-slot:activator="{ on }">
-											<v-btn v-on="on" icon color="primary">
+											<v-btn v-on="on" icon color="primary" title="Check Out">
 												<v-icon>mdi-exit-run</v-icon>
 											</v-btn>
 										</template>
-										<template v-slot:title>Check Out {{ item.customer_guid }}?</template>
+										<template v-slot:title>Check Out [{{ item.name ? item.name : 'This Customer' }}]?</template>
 									</confirm-dialog>
 									<confirm-dialog v-else @confirm="checkout_remove(item)">
 										<template v-slot:activator="{ on }">
-											<v-btn v-on="on" icon>
+											<v-btn v-on="on" icon color="primary" title="Remove Check Out">
 												<v-icon>mdi-cancel</v-icon>
 											</v-btn>
 										</template>
-										<template v-slot:title>Remove Check Out for {{ item.customer_guid }}?</template>
+										<template v-slot:title>Remove Check Out for [{{ item.name ? item.name : 'This Customer' }}]?</template>
 									</confirm-dialog>
 								</transition>
 							</td>
@@ -58,7 +66,7 @@
 
 <script>
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import { formatDistanceStrict, parseISO, format } from 'date-fns';
+import { formatDistanceStrict, parseISO, format, subHours, subDays, differenceInSeconds } from 'date-fns';
 import { isEmpty } from 'lodash';
 
 export default {
@@ -67,7 +75,7 @@ export default {
 	},
 
 	data: () => ({
-		now: new Date(),
+		now: subDays(subHours(new Date(), 10), 70),
 		time_interval: null,
 		headers: [
 			{ text: "Time", value: "postdate" },
@@ -90,6 +98,10 @@ export default {
 		in_gym_only: {
 			get() { return this.$store.getters['checkins/in_gym_only'] },
 			set(value) { this.$store.dispatch('checkins/set_in_gym_only', value) }
+		},
+
+		max_duration() {
+			return this.$store.getters['setup/max_duration'];
 		}
 	},
 
@@ -109,6 +121,19 @@ export default {
 
 		empty(obj) {
 			return isEmpty(obj);
+		},
+
+		load_name(checkin) {
+			this.$store.dispatch('checkins/get_name', checkin);
+		},
+
+		// determin if this checkin is beyond the max duration
+		// returns true if they are, false if they are not, or have already left
+		check_duration(checkin) {
+			if (checkin.time_out) return false;		// they've already left
+			let diff = differenceInSeconds(this.now, parseISO(checkin.postdate));
+			if (diff > this.max_duration) return true;	// they've been here too long
+			return false;
 		}
 	},
 
@@ -120,16 +145,7 @@ export default {
 	},
 
 	mounted() {
-		/*let data = {
-			location_tag: this.location_tag,
-			//startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00')
-			startDateTime: '2020-02-01 00:00:00',
-			endDateTime: '2020-02-01 08:03:00'
-		};*/
-//		this.$store.dispatch('checkins/get_rgp_checkins');
-
-		// update "now"
-		this.time_interval = setInterval(() => (this.now = new Date()), 60000);
+		this.time_interval = setInterval(() => this.now = subDays(subHours(new Date(), 10), 70), 60000);
 	},
 
 	beforeDestroy() {
@@ -171,7 +187,7 @@ export default {
 	line-height: 1px;
 }
 
-.list-complete-leave-active {
-	/*position: absolute;*/
-}
+/*.list-complete-leave-active {
+	position: absolute;
+}*/
 </style>
