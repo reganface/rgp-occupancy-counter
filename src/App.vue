@@ -1,17 +1,25 @@
 <template>
 	<v-app>
-		<v-app-bar app dark color="white" elevate-on-scroll>
+		<v-app-bar dark app elevate-on-scroll color="appbar">
 			<v-toolbar-title>Occupancy Counter</v-toolbar-title>
 
 			<v-spacer />
 
-			<v-toolbar-title class="display-1 font-weight-bold">{{ in_gym }}</v-toolbar-title>
+			<v-toolbar-title class="display-2 font-weight-bold">{{ in_gym }}</v-toolbar-title>
 
 			<v-spacer />
 
-			<v-btn :to="{name: 'settings'}" icon title="settings">
+			<v-btn :to="{name: 'settings'}" icon title="settings" x-large>
 				<v-icon>mdi-cog-outline</v-icon>
 			</v-btn>
+
+			<v-progress-linear
+				:active="loading"
+				indeterminate
+				absolute
+				bottom
+				color="accent"
+			/>
 		</v-app-bar>
 
 		<v-content>
@@ -33,13 +41,16 @@ export default {
 	computed: {
 		in_gym() {
 			return this.$store.getters['checkins/checkins'].in_gym;
+		},
+
+		loading() {
+			return true;
 		}
 	},
 
 	async created() {
 		await this.$store.dispatch('setup/init');
 		this.$store.dispatch('checkins/run');
-		this.$vuetify.theme.dark = false;
 	}
 };
 </script>

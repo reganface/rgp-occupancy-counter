@@ -13,7 +13,8 @@ export const state = {
 		api_key: "",
 		api_base_url: "https://api.rockgympro.com/v1",
 		location_tag: "",
-		max_duration: 10800		// default to 3 hours
+		max_duration: 180,		// time in minutes
+		max_customers: 50
 	}
 };
 
@@ -22,7 +23,8 @@ export const state = {
 // GETTERS
 export const getters = {
 	settings: state => state.settings,
-	max_duration: state => state.settings.max_duration
+	max_duration: state => state.settings.max_duration,
+	max_customers: state => state.settings.max_customers
 };
 
 

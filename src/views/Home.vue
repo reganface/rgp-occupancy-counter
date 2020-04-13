@@ -1,17 +1,20 @@
 <template>
 	<div>
-		<div class="body-1">{{ checkins.in_gym }} in the gym - {{ checkins.checkins }} total check-ins</div>
-		<div>
-			<v-switch v-model="in_gym_only" label="Only show customers still in the gym" />
-		</div>
+		<v-row>
+			<v-col>
+				<v-switch v-model="in_gym_only" class="mt-0 pt-0" label="Only show customers still in the gym" />
+			</v-col>
+			<v-col class="text-right">
+				{{ checkins.checkins }} total check-in<span v-if="checkins.checkins != 1">s</span>
+			</v-col>
+		</v-row>
 
-		<v-data-table :items="checkins.list" class="elevation-1" disable-pagination dense>
+		<v-data-table :items="checkins.list" class="elevation-1 mb-12" disable-pagination hide-default-footer dense>
 			<template v-slot:header>
 				<thead>
 					<tr>
 						<th>Time In</th>
 						<th>Customer</th>
-						<th>Status</th>
 						<th>Details</th>
 						<th>Duration</th>
 						<th class="text-center">Check-Out</th>
@@ -33,7 +36,6 @@
 								</div>
 								<div v-else>{{ item.name }}</div>
 							</td>
-							<td>{{ item.status }}</td>
 							<td>{{ item.details }}</td>
 							<td :class="{'red--text': check_duration(item)}">{{ time_in_gym(item) }}</td>
 							<td class="text-center">
@@ -66,7 +68,7 @@
 
 <script>
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import { formatDistanceStrict, parseISO, format, subHours, subDays, differenceInSeconds } from 'date-fns';
+import { formatDistanceStrict, parseISO, format, subHours, subDays, differenceInMinutes } from 'date-fns';
 import { isEmpty } from 'lodash';
 
 export default {
@@ -75,7 +77,7 @@ export default {
 	},
 
 	data: () => ({
-		now: subDays(subHours(new Date(), 6), 71),
+		now: subDays(subHours(new Date(), 17), 71),
 		time_interval: null,
 		headers: [
 			{ text: "Time", value: "postdate" },
@@ -130,8 +132,9 @@ export default {
 		// determin if this checkin is beyond the max duration
 		// returns true if they are, false if they are not, or have already left
 		check_duration(checkin) {
+			if (this.max_duration == 0) return false; 	// highlighting is off
 			if (checkin.time_out) return false;		// they've already left
-			let diff = differenceInSeconds(this.now, parseISO(checkin.postdate));
+			let diff = differenceInMinutes(this.now, parseISO(checkin.postdate));
 			if (diff > this.max_duration) return true;	// they've been here too long
 			return false;
 		}
@@ -145,7 +148,7 @@ export default {
 	},
 
 	mounted() {
-		this.time_interval = setInterval(() => this.now = subDays(subHours(new Date(), 6), 71), 60000);
+		this.time_interval = setInterval(() => this.now = subDays(subHours(new Date(), 17), 71), 60000);
 	},
 
 	beforeDestroy() {
