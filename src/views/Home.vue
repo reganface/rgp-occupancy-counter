@@ -75,7 +75,7 @@ export default {
 	},
 
 	data: () => ({
-		now: subDays(subHours(new Date(), 10), 70),
+		now: subDays(subHours(new Date(), 6), 71),
 		time_interval: null,
 		headers: [
 			{ text: "Time", value: "postdate" },
@@ -145,7 +145,7 @@ export default {
 	},
 
 	mounted() {
-		this.time_interval = setInterval(() => this.now = subDays(subHours(new Date(), 10), 70), 60000);
+		this.time_interval = setInterval(() => this.now = subDays(subHours(new Date(), 6), 71), 60000);
 	},
 
 	beforeDestroy() {

@@ -1,14 +1,17 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import config from '@/services/db.js';
 import Home from '../views/Home.vue';
 import Setup from '@/views/Setup.vue';
-import config from '@/services/db.js';
+import Settings from '@/views/Settings.vue';
+
 
 Vue.use(VueRouter);
 
 const routes = [
 	{ path: '/', name: 'home', component: Home },
-	{ path: '/setup', name: 'setup', component: Setup }
+	{ path: '/setup', name: 'setup', component: Setup },
+	{ path: '/settings', name: 'settings', component: Settings }
 ];
 
 const router = new VueRouter({
