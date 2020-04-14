@@ -9,19 +9,29 @@
 			</v-col>
 		</v-row>
 
-		<v-data-table :items="checkins.list" class="elevation-1 mb-12" disable-pagination hide-default-footer dense>
-			<template v-slot:header>
-				<thead>
-					<tr>
-						<th>Time In</th>
-						<th>Customer</th>
-						<th>Details</th>
-						<th>Duration</th>
-						<th class="text-center">Check-Out</th>
-					</tr>
-				</thead>
-			</template>
+		<v-row>
+			<v-col cols="12" sm="6">
+				<v-text-field
+					v-model="search"
+					append-icon="mdi-magnify"
+					label="Filter Customers [last name, first name]"
+					hint="Filter this list - does not search your RGP database"
+					ref="focus"
+				></v-text-field>
+			</v-col>
+		</v-row>
 
+		<v-data-table
+			:items="checkins.list"
+			:headers="headers"
+			class="elevation-1 mb-12"
+			disable-pagination
+			hide-default-footer
+			dense
+			:search="search"
+			:custom-filter="filter_customers"
+			no-data-text="No Check-Ins for Today"
+		>
 			<template v-slot:body="{ items }">
 				<tbody name="list-complete" is="transition-group">
 					<template>
@@ -80,11 +90,13 @@ export default {
 		now: subDays(subHours(new Date(), 15), 72),		// TODO: change this back to new Date()
 		time_interval: null,
 		headers: [
-			{ text: "Time", value: "postdate" },
-			{ text: "Customer", value: "customer_guid" },
-			{ text: "Status", value: "status" },
-			{ text: "Details", value: "details" }
-		]
+			{ text: "Time In", value: "postdate", filterable: false},
+			{ text: "Customer", value: "name" },
+			{ text: "Details", value: "details", filterable: false },
+			{ text: "Duration", value: "time_out", sortable: false, filterable: false },
+			{ text: "Check-Out", value: "actions", sortable: false, filterable: false }
+		],
+		search: ""
 	}),
 
 	computed: {
@@ -137,6 +149,19 @@ export default {
 			let diff = differenceInMinutes(this.now, parseISO(checkin.postdate));
 			if (diff > this.max_duration) return true;	// they've been here too long
 			return false;
+		},
+
+		// customer filter function to emulate the search in rgp
+		filter_customers(value, search, item) {
+			if (!item.name) return false;	// this customer doesn't have a name, don't bother testing this row
+			search = search.toString().toLowerCase().trim();
+			let search_lastname = search.split(",")[0];
+			let search_firstname = search.split(",")[1];
+			let lastname = item.name.split(",")[0];
+			let firstname = item.name.split(",")[1];
+			let last_test = search_lastname ? lastname.toLowerCase().includes(search_lastname.trim()) : true;
+			let first_test = search_firstname ? firstname.toLowerCase().includes(search_firstname.trim()) : true;
+			return last_test && first_test;
 		}
 	},
 
