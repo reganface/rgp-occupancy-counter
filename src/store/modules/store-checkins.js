@@ -62,6 +62,7 @@ export const actions = {
 	get_rgp_checkins: async (store, last_checkin_id) => {
 		let location_tag = store.rootState.setup.settings.location_tag;
 		let params = {
+			// TODO: start should be beginning of the day, end should be now
 			//startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00')
 			startDateTime: '2020-02-01 00:00:00',
 			//endDateTime: '2020-02-01 08:10:00',

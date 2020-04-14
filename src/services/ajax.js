@@ -39,12 +39,13 @@ export async function get(path, params) {
 export async function post(path, form_data) {
 	try {
 		store.dispatch('start_loading');
-		let { data, status, statusText } = await api_client.post(path, form_data);
-		if (status !== 200) throw statusText;
-		return resolve(data);
-	} catch (err) {
-		store.dispatch('notify/notify', { msg: err });
-		return reject(err);
+		let response = await api_client.post(path, form_data);
+		if (response.status !== 200) throw response;
+		return resolve(response.data);
+	} catch (response) {
+		let msg = `${response.status} - ${response.data.message}`;
+		store.dispatch('notify/notify', { msg });
+		return reject(msg);
 	} finally {
 		store.dispatch('stop_loading');
 	}
