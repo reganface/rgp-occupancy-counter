@@ -65,7 +65,7 @@ export const actions = {
 			//startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00')
 			startDateTime: '2020-02-01 00:00:00',
 			//endDateTime: '2020-02-01 08:10:00',
-			endDateTime: format(subHours(new Date(), 17), "2020-02-01 HH:mm:ss"),
+			endDateTime: format(subHours(new Date(), 15), "2020-02-01 HH:mm:ss"),
 			startId: last_checkin_id
 		};
 		let result = await get(`/checkins/facility/${location_tag}`, params);

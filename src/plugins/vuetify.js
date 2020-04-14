@@ -7,17 +7,31 @@ Vue.use(Vuetify);
 export default new Vuetify({
 	theme: {
 		themes: {
+			/*
 			light: {
 				appbar: '#673AB7',
 				primary: '#673AB7',
 				secondary: '#009688',
-				accent: colors.grey.darken4
+				accent: '#8AB73A'
 			},
-			dark :{
+			dark: {
 				appbar: '#272727',
 				primary: '#9d46ff',
 				secondary: '#009688',
 				accent: '#9d46ff'
+			}*/
+			light: {
+				appbar: '#004358',
+				primary: '#004358',
+				secondary: '#FD7400',
+				accent: '#bedb39',
+				error: colors.red.lighten1
+			},
+			dark: {
+				appbar: '#272727',
+				primary: colors.blue.darken2,
+				secondary: '#FD7400',
+				accent: colors.blue.darken3
 			}
 		}
 	}

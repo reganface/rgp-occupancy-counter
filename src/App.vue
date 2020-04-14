@@ -5,7 +5,7 @@
 
 			<v-spacer />
 
-			<v-toolbar-title class="display-2 font-weight-bold">{{ in_gym }}</v-toolbar-title>
+			<v-toolbar-title :class="{'red--text text--lighten-1': in_gym >= max_customers}" class="display-2 font-weight-bold">{{ in_gym }}</v-toolbar-title>
 
 			<v-spacer />
 
@@ -30,13 +30,19 @@
 			</v-container>
 		</v-content>
 
+		<notify-bar />
+
 	</v-app>
 </template>
 
 <script>
+import NotifyBar from '@/components/NotifyBar.vue';
 
 export default {
 	name: "App",
+	components: {
+		NotifyBar
+	},
 
 	computed: {
 		in_gym() {
@@ -44,7 +50,11 @@ export default {
 		},
 
 		loading() {
-			return true;
+			return this.$store.getters['loading'];
+		},
+
+		max_customers() {
+			return this.$store.getters['setup/max_customers']
 		}
 	},
 

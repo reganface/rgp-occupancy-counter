@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { resolve, reject } from 'q';
+import store from '@/store/store';
 
 const api_client = axios.create({
 	validateStatus: () => true
@@ -21,25 +22,30 @@ export function update(params) {
 // GET
 export async function get(path, params) {
 	try {
-		let { data, status, statusText } = await api_client.get(path, { params: params });
-		if (status === 500) throw `There was a server error: ${data.exception[0].message}`;
-		if (status !== 200) throw statusText;
-		return resolve(data);
-	} catch (err) {
-		console.warn("Error in ajax.js get: ", err);
-		return reject(err);
+		store.dispatch('start_loading');
+		let response = await api_client.get(path, { params: params });
+		if (response.status !== 200) throw response;
+		return resolve(response.data);
+	} catch (response) {
+		let msg = `${response.status} - ${response.data.message}`;
+		store.dispatch('notify/notify', { msg });
+		return reject(msg);
+	} finally {
+		store.dispatch('stop_loading');
 	}
 }
 
 // POST
 export async function post(path, form_data) {
 	try {
+		store.dispatch('start_loading');
 		let { data, status, statusText } = await api_client.post(path, form_data);
-		if (status === 500) throw `There was a server error: ${data.exception[0].message}`;
 		if (status !== 200) throw statusText;
 		return resolve(data);
 	} catch (err) {
-		console.warn("Error in ajax.js post: ", err);
+		store.dispatch('notify/notify', { msg: err });
 		return reject(err);
+	} finally {
+		store.dispatch('stop_loading');
 	}
 }
