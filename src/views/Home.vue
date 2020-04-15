@@ -5,7 +5,11 @@
 				<v-switch v-model="in_gym_only" class="mt-0 pt-0" label="Only show customers still in the gym" />
 			</v-col>
 			<v-col class="text-right">
-				{{ checkins.checkins }} total check-in<span v-if="checkins.checkins != 1">s</span>
+				<div class="font-weight-bold">{{ now | format_date }}</div>
+				<div class="body-2">{{ checkins.checkins }} total check-in<span v-if="checkins.checkins != 1">s</span></div>
+				<div :class="{'red--text': checkins.in_gym >= max_customers}" class="body-2">
+					{{ checkins.in_gym }} / {{ max_customers }} customers in the gym
+				</div>
 			</v-col>
 		</v-row>
 
@@ -16,8 +20,8 @@
 					append-icon="mdi-magnify"
 					label="Filter Customers [last name, first name]"
 					hint="Filter this list - does not search your RGP database"
-					ref="focus"
-				></v-text-field>
+					clearable
+				/>
 			</v-col>
 		</v-row>
 
@@ -30,10 +34,9 @@
 			dense
 			:search="search"
 			:custom-filter="filter_customers"
-			no-data-text="No Check-Ins for Today"
 		>
 			<template v-slot:body="{ items }">
-				<tbody name="list-complete" is="transition-group">
+				<tbody v-if="items.length > 0" name="list-complete" is="transition-group">
 					<template>
 						<tr v-for="item in items" :key="item.checkin_id" :class="{inactive: item.time_out}" class="list-complete-item">
 							<td>{{ item.postdate | checkin_time }}</td>
@@ -70,6 +73,13 @@
 							</td>
 						</tr>
 					</template>
+				</tbody>
+
+				<!-- no check-ins yet -->
+				<tbody v-else>
+					<tr>
+						<td colspan="5" class="text-center grey--text">No check-ins for today</td>
+					</tr>
 				</tbody>
 			</template>
 		</v-data-table>
@@ -112,6 +122,10 @@ export default {
 		in_gym_only: {
 			get() { return this.$store.getters['checkins/in_gym_only'] },
 			set(value) { this.$store.dispatch('checkins/set_in_gym_only', value) }
+		},
+
+		max_customers() {
+			return this.$store.getters['setup/max_customers'];
 		},
 
 		max_duration() {
@@ -169,6 +183,11 @@ export default {
 		checkin_time(s) {
 			if (!s) return s;
 			return format(parseISO(s), "H:mm a");
+		},
+
+		format_date(s) {
+			if (!s) return s;
+			return format(s, "MMMM do, yyyy");
 		}
 	},
 

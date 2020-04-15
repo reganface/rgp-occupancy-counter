@@ -20,7 +20,7 @@
 						<v-slider
 							v-model="max_duration"
 							min="0"
-							max="480"
+							max="360"
 							inverse-label
 							:label="duration_text"
 						/>
@@ -35,7 +35,7 @@
 						<v-slider
 							v-model="max_customers"
 							min="0"
-							max="200"
+							max="150"
 							inverse-label
 							:label="max_customers + ''"
 						/>
