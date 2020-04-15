@@ -1,6 +1,6 @@
 <template>
 	<v-app>
-		<v-app-bar dark app elevate-on-scroll color="appbar">
+		<v-app-bar v-if="init" dark app elevate-on-scroll color="appbar">
 			<v-toolbar-title>Occupancy Counter</v-toolbar-title>
 
 			<v-spacer />
@@ -23,7 +23,7 @@
 		</v-app-bar>
 
 		<v-content>
-			<v-container>
+			<v-container class="full-height">
 				<transition name="fade" mode="out-in">
 					<router-view :key="$route.name + ($route.params.type || '')"/>
 				</transition>
@@ -45,6 +45,10 @@ export default {
 	},
 
 	computed: {
+		init() {
+			return this.$store.getters['setup/settings'].init;
+		},
+
 		in_gym() {
 			return this.$store.getters['checkins/checkins'].in_gym;
 		},
@@ -60,7 +64,7 @@ export default {
 
 	async created() {
 		await this.$store.dispatch('setup/init');
-		this.$store.dispatch('checkins/run');
+		if (this.init) this.$store.dispatch('checkins/run');	// start auto refresh if setup is complete
 	}
 };
 </script>
@@ -74,5 +78,9 @@ export default {
 .fade-enter,
 .fade-leave-to {
 	opacity: 0;
+}
+
+.full-height {
+	height: 100%;
 }
 </style>

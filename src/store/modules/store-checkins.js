@@ -12,7 +12,7 @@ export const state = {
 	checkins: {},
 	in_gym_only: true,
 	refresh_interval: null,
-	refresh_rate: 20000
+	refresh_rate: 20000		// how often to ping rgp for new check-ins (in milliseconds)
 };
 
 
@@ -49,14 +49,22 @@ export const getters = {
 
 // ACTIONS
 export const actions = {
-	run: store => {
-		store.commit('SET_CHECKINS', config.get(`checkins.${today}`, {}));		// load any saved checkins from disk
-		let last_checkin_id = store.getters['last_checkin_id'];					// get most recent checkin id
+	run: async store => {
+		store.commit('SET_CHECKINS', config.get(`checkins.${today}`, {}));	// load any saved checkins from disk
+		let last_checkin_id = store.getters['last_checkin_id'];		// get most recent checkin id
+		await store.dispatch('get_rgp_checkins', last_checkin_id);	// initial load
+		last_checkin_id = store.getters['last_checkin_id'];
 
 		store.state.refresh_interval = setInterval(async () => {
 			await store.dispatch('get_rgp_checkins', last_checkin_id);
 			last_checkin_id = store.getters['last_checkin_id'];
 		}, store.state.refresh_rate);
+	},
+
+	stop: store => {
+		// stop auto refresh and clear checkins that are already loaded
+		clearInterval(store.state.refresh_interval);
+		store.commit('SET_CHECKINS', {});
 	},
 
 	get_rgp_checkins: async (store, last_checkin_id) => {

@@ -4,9 +4,9 @@
 			<slot v-bind:on="on" name="activator" />
 		</template>
 		<v-card>
-			<v-card-title class="subtitle-1">
+			<v-card-text class="subtitle-1 pt-3">
 				<slot name="title" />
-			</v-card-title>
+			</v-card-text>
 			<v-card-actions>
 				<v-spacer />
 				<v-btn @click="cancel" text>

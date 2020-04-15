@@ -53,6 +53,22 @@
 
 
 
+				<v-row class="mt-5">
+					<v-col>
+						Purge data and reset configuration.
+					</v-col>
+					<v-col>
+						<confirm-dialog @confirm="purge">
+							<template v-slot:activator="{ on }">
+								<v-btn v-on="on" color="error">Purge Data</v-btn>
+							</template>
+							<template v-slot:title>
+								Are you sure you want to purge all check-in data from this computer and reset the configuration?
+								In order to use this application again, you will need to go through the inital program setup.
+							</template>
+						</confirm-dialog>
+					</v-col>
+				</v-row>
 
 
 			</v-col>
@@ -80,7 +96,12 @@
 </template>
 
 <script>
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
+
 export default {
+	components: {
+		ConfirmDialog
+	},
 
 	computed: {
 		max_duration: {
@@ -109,6 +130,10 @@ export default {
 	methods: {
 		open_link(link) {
 			require("electron").shell.openExternal(link);
+		},
+
+		purge() {
+			this.$store.dispatch('setup/purge');
 		}
 	}
 }

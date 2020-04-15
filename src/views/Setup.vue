@@ -19,7 +19,7 @@
 					<v-text-field v-model="form.api_key" label="RGP API Key" type="password" />
 					<v-text-field v-model="form.api_base_url" label="RGP API Base URL" />
 
-					<v-btn @click="check_api" color="primary">
+					<v-btn @click="check_api" :loading="loading" color="primary">
 						Next
 						<v-icon>mdi-chevron-right</v-icon>
 					</v-btn>
@@ -66,7 +66,8 @@ export default {
 			{ text: "Connect to another computer that is already setup as the Master", value: false }
 		],
 		location_select: [],
-		error: ""
+		error: "",
+		loading: false
 	}),
 
 	computed: {
@@ -87,6 +88,7 @@ export default {
 
 		async check_api() {
 			this.error = "";
+			this.loading = true;
 			try {
 				if (this.form.master !== true && this.form.master !== false) throw "Select an installation type";
 				if (!this.form.api_user || !this.form.api_key || !this.form.api_base_url) throw "Enter RGP API Details";
@@ -104,11 +106,13 @@ export default {
 				this.screen = "step2"
 			} catch (err) {
 				this.error = err;
+			} finally {
+				this.loading = false;
 			}
 
 		},
 
-		save() {
+		async save() {
 			this.error = "";
 			try {
 				if (!this.form.location_tag) throw 'Select a facility';
@@ -117,8 +121,11 @@ export default {
 					location_tag: this.form.location_tag,
 					init: true
 				};
-				this.$store.dispatch('setup/update_settings', new_settings);
+				await this.$store.dispatch('setup/update_settings', new_settings);
 				this.$router.push({name: 'home'});
+
+				// start auto refresh
+				this.$store.dispatch('checkins/run');
 
 			} catch (err) {
 				this.error = err;
