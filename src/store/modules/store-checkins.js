@@ -1,8 +1,9 @@
-import config from '@/services/db.js';
+import { config, sync_object } from '@/services/db.js';
 import { forEach } from 'lodash';
-import { format, subHours } from 'date-fns';
+import { format } from 'date-fns';
 import { get } from '@/services/ajax.js';
 import { resolve, reject } from 'q';
+let today = format(new Date(), 'yyyy-MM-dd');
 
 export const namespaced = true;
 
@@ -49,7 +50,6 @@ export const getters = {
 // ACTIONS
 export const actions = {
 	run: store => {
-		let today = "2020-02-01";
 		store.commit('SET_CHECKINS', config.get(`checkins.${today}`, {}));		// load any saved checkins from disk
 		let last_checkin_id = store.getters['last_checkin_id'];					// get most recent checkin id
 
@@ -62,11 +62,8 @@ export const actions = {
 	get_rgp_checkins: async (store, last_checkin_id) => {
 		let location_tag = store.rootState.setup.settings.location_tag;
 		let params = {
-			// TODO: start should be beginning of the day, end should be now
-			//startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00')
-			startDateTime: '2020-02-01 00:00:00',
-			//endDateTime: '2020-02-01 08:10:00',
-			endDateTime: format(subHours(new Date(), 15), "2020-02-01 HH:mm:ss"),
+			startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00'),
+			endDateTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
 			startId: last_checkin_id
 		};
 		let result = await get(`/checkins/facility/${location_tag}`, params);
@@ -155,6 +152,7 @@ export const mutations = {
 
 	UPDATE_CHECKINS: (state, value) => {
 		state.checkins = Object.assign({}, state.checkins, value);
+		sync_object(`checkins.${today}`, state.checkins);
 	},
 
 	SET_IN_GYM_ONLY: (state, value) => {

@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import config from '@/services/db.js';
+import { config } from '@/services/db.js';
 import Home from '../views/Home.vue';
 import Setup from '@/views/Setup.vue';
 import Settings from '@/views/Settings.vue';

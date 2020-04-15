@@ -1,5 +1,5 @@
 import { resolve } from 'q';
-import config from '@/services/db.js';
+import { config } from '@/services/db.js';
 import { get, update } from '@/services/ajax.js';
 
 export const namespaced = true;
@@ -31,7 +31,7 @@ export const getters = {
 
 // ACTIONS
 export const actions = {
-	init: store => {
+	init: async store => {
 		const settings = config.get('settings');
 		store.commit('SET_SETTINGS', settings);
 		update(settings);

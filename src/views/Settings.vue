@@ -69,7 +69,7 @@
 				<div class="caption text-center">
 					Created by <a @click="open_link('mailto:chris@onpointtiming.com')">Chris Regan</a> to help with reopening efforts after COVID-19
 					<v-icon small color="pink" >mdi-heart</v-icon> <br />
-					This project is Open Source &mdash; <a @click="open_link('https://github.com/reganface')">GitHub</a> <br /> <!-- TODO: add repo link when created -->
+					This project is Open Source &mdash; <a @click="open_link('https://github.com/reganface/rgp-occupancy-counter')">GitHub</a> <br /> <!-- TODO: add repo link when created -->
 					Mesa Rim Climbing Centers &mdash; <a @click="open_link('https://mesarim.com')">https://mesarim.com</a> <br />
 					On Point Timing (Speed Timers) &mdash; <a @click="open_link('https://onpointtiming.com')">https://onpointtiming.com</a>
 				</div>

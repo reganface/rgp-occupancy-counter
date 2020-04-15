@@ -78,7 +78,7 @@
 
 <script>
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import { formatDistanceStrict, parseISO, format, subHours, subDays, differenceInMinutes } from 'date-fns';
+import { formatDistanceStrict, parseISO, format, differenceInMinutes } from 'date-fns';
 import { isEmpty } from 'lodash';
 
 export default {
@@ -87,7 +87,7 @@ export default {
 	},
 
 	data: () => ({
-		now: subDays(subHours(new Date(), 15), 72),		// TODO: change this back to new Date()
+		now: new Date(),
 		time_interval: null,
 		headers: [
 			{ text: "Time In", value: "postdate", filterable: false},
@@ -173,7 +173,8 @@ export default {
 	},
 
 	mounted() {
-		this.time_interval = setInterval(() => this.now = subDays(subHours(new Date(), 15), 72), 60000);	// TODO: change this back to new Date()
+		// update "now" every 60 seconds so that the calculated duration gets updated
+		this.time_interval = setInterval(() => this.now = new Date(), 60000);
 	},
 
 	beforeDestroy() {
