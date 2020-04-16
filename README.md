@@ -27,7 +27,7 @@ Once you've downloaded the repo, you'll need to install any dependencies with `n
 	- Export data to CSV for end user processing
 	- Customer lookup: Select a customer and return a list of all other customers who have been in the gym at the same time
 
-# TOOD
+# TODO
 - Polish up and test current features.  Add in any missing error handlers.
 - Data is being stored in a JSON file via Electron-Store.  Stress test this with a year's worth of check-ins
 - Implement solution(s) for contact tracing
