@@ -25,7 +25,8 @@ export const state = {
 export const getters = {
 	settings: state => state.settings,
 	max_duration: state => state.settings.max_duration,
-	max_customers: state => state.settings.max_customers
+	max_customers: state => state.settings.max_customers,
+	master: state => state.settings.master
 };
 
 

@@ -12,35 +12,37 @@
 			<v-col cols="12" sm="8">
 				<div class="display-3 mb-12 text-center">Settings</div>
 
-				<v-row>
-					<v-col>
-						Maximum duration that a customer is allowed in the facility
-					</v-col>
-					<v-col>
-						<v-slider
-							v-model="max_duration"
-							min="0"
-							max="360"
-							inverse-label
-							:label="duration_text"
-						/>
-					</v-col>
-				</v-row>
+				<template v-if="master">
+					<v-row>
+						<v-col>
+							Maximum duration that a customer is allowed in the facility
+						</v-col>
+						<v-col>
+							<v-slider
+								v-model="max_duration"
+								min="0"
+								max="360"
+								inverse-label
+								:label="duration_text"
+							/>
+						</v-col>
+					</v-row>
 
-				<v-row>
-					<v-col>
-						Maximun number of customers allowed in the facility at once
-					</v-col>
-					<v-col>
-						<v-slider
-							v-model="max_customers"
-							min="0"
-							max="150"
-							inverse-label
-							:label="max_customers + ''"
-						/>
-					</v-col>
-				</v-row>
+					<v-row>
+						<v-col>
+							Maximun number of customers allowed in the facility at once
+						</v-col>
+						<v-col>
+							<v-slider
+								v-model="max_customers"
+								min="0"
+								max="150"
+								inverse-label
+								:label="max_customers + ''"
+							/>
+						</v-col>
+					</v-row>
+				</template>
 
 				<v-row>
 					<v-col>
@@ -53,7 +55,7 @@
 
 
 
-				<v-row class="mt-5">
+				<v-row v-if="master" class="mt-5">
 					<v-col>
 						Purge data and reset configuration.
 					</v-col>
@@ -124,6 +126,10 @@ export default {
 		dark_theme: {
 			get() { return this.$vuetify.theme.dark },
 			set(value) { this.$vuetify.theme.dark = value }
+		},
+
+		master() {
+			return this.$store.getters['setup/master'];
 		}
 	},
 

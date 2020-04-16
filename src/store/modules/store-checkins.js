@@ -55,9 +55,8 @@ export const actions = {
 		await store.dispatch('get_rgp_checkins', last_checkin_id);	// initial load
 		last_checkin_id = store.getters['last_checkin_id'];
 
-		store.state.refresh_interval = setInterval(async () => {
-			await store.dispatch('get_rgp_checkins', last_checkin_id);
-			last_checkin_id = store.getters['last_checkin_id'];
+		store.state.refresh_interval = setInterval(() => {
+			store.dispatch('get_rgp_checkins', last_checkin_id);
 		}, store.state.refresh_rate);
 	},
 
@@ -85,12 +84,14 @@ export const actions = {
 				details: value.details,
 				level: value.level,
 				postdate: value.postDate,
-				time_out: null
+				time_out: null,
+				last_updated: new Date()
 			};
 		});
 		store.commit('UPDATE_CHECKINS', checkins);
 		store.dispatch('lookup_new_names', checkins);
 	},
+
 
 	lookup_new_names: async (store, checkins) => {
 		let checkins_array = Object.values(checkins);
@@ -110,6 +111,7 @@ export const actions = {
 		}
 	},
 
+	// get a customer name from RGP for a specific check-in
 	get_name: async (store, checkin) => {
 		let error = false;
 		try {
