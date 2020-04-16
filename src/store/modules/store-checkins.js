@@ -1,6 +1,6 @@
 import { config, sync_object } from '@/services/db.js';
 import { forEach } from 'lodash';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { get } from '@/services/ajax.js';
 import { resolve, reject } from 'q';
 let today = format(new Date(), 'yyyy-MM-dd');
@@ -12,13 +12,15 @@ export const state = {
 	checkins: {},
 	in_gym_only: true,
 	refresh_interval: null,
-	refresh_rate: 20000		// how often to ping rgp for new check-ins (in milliseconds)
+	refresh_rate: 20000,		// how often to ping rgp for new check-ins (in milliseconds)
+	last_updated: format(new Date(), 'yyyy-MM-dd 00:00:00')		// for clients to sync with master - defaults to the start of today
 };
 
 
 
 // GETTERS
 export const getters = {
+	all_checkins: state => state.checkins,	// all checkins, unfiltered
 	checkins: state => {
 		let checkins_array = Object.values(state.checkins);
 		let in_gym = 0;
@@ -34,15 +36,15 @@ export const getters = {
 			}, 0);
 		}
 
-
 		return {
-			list: checkins_array,
-			in_gym: in_gym,
-			checkins: Object.keys(state.checkins).length
+			list: checkins_array,	// filtered list of checkins
+			in_gym: in_gym,		// number of customers currently in the gym
+			checkins: Object.keys(state.checkins).length	// total checkin count for the day
 		};
 	},
 	in_gym_only: state => state.in_gym_only,
-	last_checkin_id: state => Math.max(...Object.keys(state.checkins), 0)
+	last_checkin_id: state => Math.max(...Object.keys(state.checkins), 0),
+	last_updated: state => state.last_updated
 };
 
 
@@ -59,10 +61,10 @@ export const actions = {
 	},
 
 	run_as_client: async store => {
-		await store.dispatch('get_master_checkins', store.getters['last_update_time']);
+		await store.dispatch('get_master_checkins', store.getters['last_updated']);
 
 		store.state.refresh_interval = setInterval(() => {
-			store.dispatch('get_master_checkins', store.getters['last_update_time']);
+			store.dispatch('get_master_checkins', store.getters['last_updated']);
 		}, store.state.refresh_rate);
 	},
 
@@ -98,9 +100,21 @@ export const actions = {
 		store.dispatch('lookup_new_names', checkins);
 	},
 
-	get_master_checkins: async (store, last_update_time) => {
-		let result = await get(`/checkins/${last_update_time}`);
-		// TODO: finish this next
+	get_master_checkins: async (store, last_updated) => {
+		// get new/updated checkins from master
+		let checkins = await get(`/checkins/${last_updated}`);
+
+		// get the most recent last_updated from
+		// convert to array, then reduce that to the max last_updated
+		let new_time = Object.values(checkins).reduce((acc, cur) => {
+			console.log(cur.last_updated, acc);
+			return parseISO(cur.last_updated) > parseISO(acc) ? cur.last_updated : acc;
+		}, last_updated);
+
+		console.log(new_time);
+
+		store.commit('UPDATE_CHECKINS', checkins);
+		store.commit('SET_LAST_UPDATED', new_time);
 	},
 
 
@@ -179,6 +193,10 @@ export const mutations = {
 
 	SET_IN_GYM_ONLY: (state, value) => {
 		state.in_gym_only = value;
+	},
+
+	SET_LAST_UPDATED: (state, value) => {
+		state.last_updated = value;
 	}
 };
 

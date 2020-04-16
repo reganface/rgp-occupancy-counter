@@ -41,12 +41,15 @@ app.get('/ping', (request, response) => {
 // get check-ins that have been updated since last update on date
 app.get('/checkins/:last_update', (request, response) => {
 	let last_update = request.params.last_update;
-	let checkins = store.getters['checkins/checkins'].list;
+	let checkins = store.getters['checkins/all_checkins'];
+
+	// convert to array so we can filter it
+	checkins = Object.values(checkins);
 
 	// return only check-ins that have been updated since the provided start date
 	checkins = checkins.filter(checkin => parseISO(checkin.last_updated) > parseISO(last_update));
 
-	// convert array to object keyed by checkin id
+	// convert array back to object keyed by checkin id
 	checkins = checkins.reduce((obj, row) => ({ ...obj, [row.checkin_id]: row }), {});
 
 	response.send(checkins);
