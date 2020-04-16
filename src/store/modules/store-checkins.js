@@ -1,7 +1,7 @@
 import { config, sync_object } from '@/services/db.js';
 import { forEach } from 'lodash';
 import { format, parseISO } from 'date-fns';
-import { get } from '@/services/ajax.js';
+import { get, post } from '@/services/ajax.js';
 import { resolve, reject } from 'q';
 let today = format(new Date(), 'yyyy-MM-dd');
 
@@ -157,20 +157,50 @@ export const actions = {
 		return resolve();
 	},
 
-	checkout: (store, data) => {
+	checkout: async (store, data) => {
 		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
-		let row = store.state.checkins[data.checkin_id];
-		row.time_out = now;
-		row.last_updated = now;
-		store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
+		let master = store.rootGetters['setup/master'];
+
+		if (master) {
+			// this is the master server, update here
+			let row = store.state.checkins[data.checkin_id];
+			row.time_out = now;
+			row.last_updated = now;
+			store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
+		} else {
+			// this is just a client, send POST to master server
+			await post('/add-checkout', { checkin_id: data.checkin_id });
+
+			// update local copy of check-ins so that UI is updated now
+			// times might slightly differ from master, but it will be synced on next refresh
+			let row = store.state.checkins[data.checkin_id];
+			row.time_out = now;
+			store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
+		}
+
 	},
 
-	checkout_remove: (store, data) => {
+	checkout_remove: async (store, data) => {
 		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
-		let row = store.state.checkins[data.checkin_id];
-		row.time_out = null;
-		row.last_updated = now;
-		store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
+		let master = store.rootGetters['setup/master'];
+
+		if (master) {
+			// this is the master, update here
+			let row = store.state.checkins[data.checkin_id];
+			row.time_out = null;
+			row.last_updated = now;
+			store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
+		} else {
+			// this is a client, POST to master
+			await post('/remove-checkout', { checkin_id: data.checkin_id });
+
+			// update local copy of check-ins so that UI is updated now
+			// times might slightly differ from master, but it will be synced on next refresh
+			let row = store.state.checkins[data.checkin_id];
+			row.time_out = null;
+			store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
+		}
+
 	},
 
 	set_in_gym_only: (store, value) => {

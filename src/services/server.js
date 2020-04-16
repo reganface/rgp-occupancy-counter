@@ -5,6 +5,8 @@ const app = express();
 const port = 3000;
 let server = null;
 
+app.use(express.json());
+
 // start the http server to listen for other clients
 export const start_server = () => {
 	server = app.listen(port, () => {
