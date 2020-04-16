@@ -88,9 +88,7 @@ export const actions = {
 				checkin_id: value.checkinId,
 				customer_guid: value.customerGuid,
 				name: value.remoteCustomerName ? value.remoteCustomerName : "",
-				status: value.status,
 				details: value.details,
-				level: value.level,
 				postdate: value.postDate,
 				time_out: null,
 				last_updated: format(new Date(), "yyyy-MM-dd HH:mm:ss")
@@ -107,11 +105,8 @@ export const actions = {
 		// get the most recent last_updated from
 		// convert to array, then reduce that to the max last_updated
 		let new_time = Object.values(checkins).reduce((acc, cur) => {
-			console.log(cur.last_updated, acc);
 			return parseISO(cur.last_updated) > parseISO(acc) ? cur.last_updated : acc;
 		}, last_updated);
-
-		console.log(new_time);
 
 		store.commit('UPDATE_CHECKINS', checkins);
 		store.commit('SET_LAST_UPDATED', new_time);
