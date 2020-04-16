@@ -34,7 +34,6 @@ export default async () => {
 const search = async () => {
 	return new Promise(resolve => {
 		let search_interval = setInterval(() => {
-			console.log(current, remaining, inflight);
 			if (master_addr || current > 254 && inflight <= 0) {
 				// scan is finished
 				clearInterval(search_interval);
