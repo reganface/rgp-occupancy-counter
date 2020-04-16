@@ -1,7 +1,9 @@
 export const namespaced = true;
 let timeout = null;
 
-// STATE
+/*******************
+ *	STATE
+ *******************/
 export const state = {
 	show: false,
 	type: "error",
@@ -11,7 +13,9 @@ export const state = {
 
 
 
-// GETTERS
+/*******************
+ *	GETTERS
+ *******************/
 export const getters = {
 	show: state => state.show,
 	type: state => state.type,
@@ -21,7 +25,9 @@ export const getters = {
 
 
 
-// ACTIONS
+/*******************
+ *	ACTIONS
+ *******************/
 export const actions = {
 	notify: (store, data) => {
 		clearTimeout(timeout);
@@ -39,7 +45,9 @@ export const actions = {
 
 
 
-// MUTATIONS
+/*******************
+ *	MUTATIONS
+ *******************/
 export const mutations = {
 	HIDE: state => {
 		state.show = false;

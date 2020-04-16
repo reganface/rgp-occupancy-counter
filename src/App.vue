@@ -68,11 +68,11 @@ export default {
 	},
 
 	async created() {
-		await this.$store.dispatch('setup/init');
+		await this.$store.dispatch('setup/init');	// wait for settings to be loaded from disk
 		if (this.init) {
 			// setup has been completed
 			if (this.master) {
-				this.$store.dispatch('checkins/run');	// start auto refresh
+				this.$store.dispatch('checkins/run');	// start auto refresh from rgp api
 				start_server();		// start http server
 			} else {
 				this.$store.dispatch('checkins/run_as_client');	// auto refresh from master server

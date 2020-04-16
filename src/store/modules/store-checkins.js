@@ -7,7 +7,9 @@ let today = format(new Date(), 'yyyy-MM-dd');
 
 export const namespaced = true;
 
-// STATE
+/*******************
+ *	STATE
+ *******************/
 export const state = {
 	checkins: {},
 	in_gym_only: true,
@@ -18,7 +20,9 @@ export const state = {
 
 
 
-// GETTERS
+/*******************
+ *	GETTERS
+ *******************/
 export const getters = {
 	all_checkins: state => state.checkins,	// all checkins, unfiltered
 	checkins: state => {
@@ -42,15 +46,18 @@ export const getters = {
 			checkins: Object.keys(state.checkins).length	// total checkin count for the day
 		};
 	},
-	in_gym_only: state => state.in_gym_only,
-	last_checkin_id: state => Math.max(...Object.keys(state.checkins), 0),
-	last_updated: state => state.last_updated
+	in_gym_only: state => state.in_gym_only,	// flag to filter out customers that are no longer in the gym
+	last_checkin_id: state => Math.max(...Object.keys(state.checkins), 0),	// used by master only
+	last_updated: state => state.last_updated	// used by client only
 };
 
 
 
-// ACTIONS
+/*******************
+ *	ACTIONS
+ *******************/
 export const actions = {
+	// start auto refresh as master
 	run: async store => {
 		store.commit('SET_CHECKINS', config.get(`checkins.${today}`, {}));	// load any saved checkins from disk
 		await store.dispatch('get_rgp_checkins', store.getters['last_checkin_id']);	// initial load
@@ -60,6 +67,7 @@ export const actions = {
 		}, store.state.refresh_rate);
 	},
 
+	// start auto refresh as client
 	run_as_client: async store => {
 		await store.dispatch('get_master_checkins', store.getters['last_updated']);
 
@@ -68,12 +76,14 @@ export const actions = {
 		}, store.state.refresh_rate);
 	},
 
+	// stop auto refresh and clear checkins that are already loaded
 	stop: store => {
-		// stop auto refresh and clear checkins that are already loaded
 		clearInterval(store.state.refresh_interval);
 		store.commit('SET_CHECKINS', {});
 	},
 
+	// get new check-ins from RGP
+	// create queue of check-ins to do customer name lookups
 	get_rgp_checkins: async (store, last_checkin_id) => {
 		let location_tag = store.rootState.setup.settings.location_tag;
 		let params = {
@@ -98,6 +108,7 @@ export const actions = {
 		store.dispatch('lookup_new_names', checkins);
 	},
 
+	// get new check-ins from the master server
 	get_master_checkins: async (store, last_updated) => {
 		// get new/updated checkins from master
 		let checkins = await get(`/checkins/${last_updated}`);
@@ -112,7 +123,7 @@ export const actions = {
 		store.commit('SET_LAST_UPDATED', new_time);
 	},
 
-
+	// loop through list of check-ins that need customer name lookups
 	lookup_new_names: async (store, checkins) => {
 		let checkins_array = Object.values(checkins);
 		let need_names = checkins_array.filter(checkin => checkin.customer_guid && !checkin.name);
@@ -152,6 +163,7 @@ export const actions = {
 		return resolve();
 	},
 
+	// add a check-out time to a specific check-in
 	checkout: async (store, data) => {
 		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 		let master = store.rootGetters['setup/master'];
@@ -175,6 +187,7 @@ export const actions = {
 
 	},
 
+	// remove a check-out time from a check-in - as if they never checked out
 	checkout_remove: async (store, data) => {
 		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 		let master = store.rootGetters['setup/master'];
@@ -205,7 +218,9 @@ export const actions = {
 
 
 
-// MUTATIONS
+/*******************
+ *	MUTATIONS
+ *******************/
 export const mutations = {
 	SET_CHECKINS: (state, value) => {
 		state.checkins = value;
@@ -226,6 +241,7 @@ export const mutations = {
 };
 
 
+// helper function to be able to use setTimeout with async/await
 function delay(x) {
 	return new Promise(resolve => setTimeout(resolve, x));
 }

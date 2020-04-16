@@ -5,7 +5,9 @@ import router from '@/router/router.js';
 
 export const namespaced = true;
 
-// STATE
+/*******************
+ *	STATE
+ *******************/
 export const state = {
 	settings: {
 		init: false,
@@ -24,7 +26,9 @@ export const state = {
 
 
 
-// GETTERS
+/*******************
+ *	GETTERS
+ *******************/
 export const getters = {
 	settings: state => state.settings,
 	max_duration: state => state.settings.max_duration,
@@ -36,8 +40,11 @@ export const getters = {
 
 
 
-// ACTIONS
+/*******************
+ *	ACTIONS
+ *******************/
 export const actions = {
+	// read settings from disk on program load
 	init: async store => {
 		const settings = config.get('settings');
 		store.commit('SET_SETTINGS', settings);
@@ -50,11 +57,13 @@ export const actions = {
 		store.dispatch('update_settings', data)
 	},
 
+	// get a list of all facility locations from RGP
 	get_locations: async () => {
 		let result = await get('/facilities');
 		return resolve(result.facilities);
 	},
 
+	// update or add any new settings to the vuex state and to disk
 	update_settings: (store, data) => {
 		store.commit('SET_SETTINGS', data);
 		config.set('settings', Object.assign({}, store.state.settings, data));	// save to config (disk)
@@ -88,7 +97,9 @@ export const actions = {
 
 
 
-// MUTATIONS
+/*******************
+ *	MUTATIONS
+ *******************/
 export const mutations = {
 	SET_SETTINGS: (state, value) => {
 		state.settings = Object.assign({}, state.settings, value);

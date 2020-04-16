@@ -19,12 +19,14 @@
 					<v-select v-model="form.master" :items="master_select" label="Installation Type" />
 
 					<v-fade-transition mode="out-in">
+						<!-- options for master -->
 						<div v-if="form.master === true" key="master">
 							<v-text-field v-model="form.api_user" label="RGP API User" />
 							<v-text-field v-model="form.api_key" label="RGP API Key" type="password" />
 							<v-text-field v-model="form.api_base_url" label="RGP API Base URL" />
 						</div>
 
+						<!-- advanced options for client -->
 						<div v-else-if="form.master === false && manual_ip" key="advanced">
 							<div class="caption">
 								<a @click="manual_ip = false">Hide Advanced Options</a>
@@ -33,6 +35,7 @@
 							<v-text-field v-model="form.port" type="number" label="Server Port" />
 						</div>
 
+						<!-- link to show advanced options -->
 						<div v-else-if="form.master === false" class="text-center caption mb-8" key="link">
 							<a @click="manual_ip = true">Advanced Options</a>
 						</div>
@@ -43,6 +46,7 @@
 						<v-icon>mdi-chevron-right</v-icon>
 					</v-btn>
 
+					<!-- progress bar for network scanning -->
 					<div v-if="!form.master && loading" class="loading-bar">
 						<v-progress-linear v-model="progress" color="primary" />
 						<div class="caption">Scanning Network...</div>
@@ -90,7 +94,7 @@ export default {
 		},
 		master_select: [
 			{ text: "This computer will be the Master", value: true},
-			{ text: "Connect to another computer that is already setup as the Master", value: false }
+			{ text: "This is an additional client", value: false }
 		],
 		location_select: [],
 		error: "",
@@ -151,7 +155,7 @@ export default {
 
 		},
 
-		// find master server on the network
+		// find master server on the network and finalize setup
 		async find_master() {
 			try {
 				this.loading = true;
@@ -163,11 +167,8 @@ export default {
 					if (result !== "pong") throw "Could not find master at this IP and Port";
 
 				} else {
-					// scan for master
-					let result = await scan();
-
-					// ip found
-					this.form.ip_addr = result;
+					let result = await scan();	// scan for master
+					this.form.ip_addr = result;	// ip found
 				}
 
 				// update axios connection details to be for the master server
@@ -186,6 +187,7 @@ export default {
 
 		},
 
+		// finalize master setup
 		async save() {
 			this.error = "";
 			try {

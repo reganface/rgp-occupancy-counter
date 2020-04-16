@@ -8,10 +8,12 @@
 				</v-btn>
 			</v-col>
 		</v-row>
+
 		<v-row justify="center">
 			<v-col cols="12" sm="8">
 				<div class="display-3 mb-12 text-center">Settings</div>
 
+				<!-- only show these options on the master -->
 				<template v-if="master">
 					<v-row>
 						<v-col>
@@ -53,8 +55,6 @@
 					</v-col>
 				</v-row>
 
-
-
 				<v-row v-if="master" class="mt-5">
 					<v-col>
 						Purge data and reset configuration.
@@ -71,12 +71,10 @@
 						</confirm-dialog>
 					</v-col>
 				</v-row>
-
-
 			</v-col>
 		</v-row>
 
-		<v-row justify="center" class="my-12 py-12">
+		<v-row justify="center" class="my-12">
 			<v-col cols="12" sm="8">
 				<v-divider />
 			</v-col>
@@ -87,7 +85,7 @@
 				<div class="caption text-center">
 					Created by <a @click="open_link('mailto:chris@onpointtiming.com')">Chris Regan</a> to help with reopening efforts after COVID-19
 					<v-icon small color="pink" >mdi-heart</v-icon> <br />
-					This project is Open Source &mdash; <a @click="open_link('https://github.com/reganface/rgp-occupancy-counter')">GitHub</a> <br /> <!-- TODO: add repo link when created -->
+					This project is Open Source &mdash; <a @click="open_link('https://github.com/reganface/rgp-occupancy-counter')">GitHub</a> <br />
 					Mesa Rim Climbing Centers &mdash; <a @click="open_link('https://mesarim.com')">https://mesarim.com</a> <br />
 					On Point Timing (Speed Timers) &mdash; <a @click="open_link('https://onpointtiming.com')">https://onpointtiming.com</a>
 				</div>
