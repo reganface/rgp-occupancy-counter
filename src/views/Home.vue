@@ -182,7 +182,7 @@ export default {
 	filters: {
 		checkin_time(s) {
 			if (!s) return s;
-			return format(parseISO(s), "H:mm a");
+			return format(parseISO(s), "h:mm a");
 		},
 
 		format_date(s) {

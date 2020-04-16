@@ -37,6 +37,7 @@
 
 <script>
 import NotifyBar from '@/components/NotifyBar.vue';
+import { start_server, stop_server } from '@/services/server.js';
 
 export default {
 	name: "App",
@@ -59,12 +60,22 @@ export default {
 
 		max_customers() {
 			return this.$store.getters['setup/max_customers']
+		},
+
+		master() {
+			return this.$store.getters['setup/settings'].master;
 		}
 	},
 
 	async created() {
 		await this.$store.dispatch('setup/init');
 		if (this.init) this.$store.dispatch('checkins/run');	// start auto refresh if setup is complete
+		if (this.master) start_server();		// start http server if this is the master client
+	},
+
+	beforeDestroy() {
+		// stop the http server before quitting
+		stop_server();
 	}
 };
 </script>

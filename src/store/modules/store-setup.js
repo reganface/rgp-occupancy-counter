@@ -16,7 +16,8 @@ export const state = {
 		location_tag: "",
 		max_duration: 180,		// time in minutes
 		max_customers: 50
-	}
+	},
+	scan_progress: 0
 };
 
 
@@ -26,7 +27,8 @@ export const getters = {
 	settings: state => state.settings,
 	max_duration: state => state.settings.max_duration,
 	max_customers: state => state.settings.max_customers,
-	master: state => state.settings.master
+	master: state => state.settings.master,
+	scan_progress: state => state.scan_progress
 };
 
 
@@ -71,6 +73,10 @@ export const actions = {
 		config.delete('checkins');								// remove all checkins from disk
 		store.dispatch('checkins/stop', null, { root: true });	// stop auto refresh of check-ins
 		router.push({name: 'setup'});
+	},
+
+	update_scan_progress: (store, value) => {
+		store.commit('SET_SCAN_PROGRESS', value);
 	}
 };
 
@@ -80,5 +86,9 @@ export const actions = {
 export const mutations = {
 	SET_SETTINGS: (state, value) => {
 		state.settings = Object.assign({}, state.settings, value);
+	},
+
+	SET_SCAN_PROGRESS: (state, value) => {
+		state.scan_progress = value;
 	}
 };

@@ -3,7 +3,8 @@ import { resolve, reject } from 'q';
 import store from '@/store/store';
 
 const api_client = axios.create({
-	validateStatus: () => true
+	validateStatus: () => true,
+	timeout: 10000,
 });
 
 

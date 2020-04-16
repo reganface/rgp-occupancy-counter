@@ -85,7 +85,7 @@ export const actions = {
 				level: value.level,
 				postdate: value.postDate,
 				time_out: null,
-				last_updated: new Date()
+				last_updated: format(new Date(), "yyyy-MM-dd HH:mm:ss")
 			};
 		});
 		store.commit('UPDATE_CHECKINS', checkins);
@@ -113,13 +113,14 @@ export const actions = {
 
 	// get a customer name from RGP for a specific check-in
 	get_name: async (store, checkin) => {
+		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 		let error = false;
 		try {
 			let result = await get(`/customers/${checkin.customer_guid}`);	// fetch name from api
 			let customer = result.customer;
 			checkin.name = `${customer.lastName}, ${customer.firstName} ${customer.middleName}`.trim();
+			checkin.last_updated = now;
 		} catch (err) {
-			console.log(err);
 			checkin.name = "####";
 			error = true;
 		} finally {
@@ -132,19 +133,19 @@ export const actions = {
 	},
 
 	checkout: (store, data) => {
+		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 		let row = store.state.checkins[data.checkin_id];
-		row.time_out = format(new Date(), "yyyy-MM-dd HH:mm:ss");
-		let obj = {};
-		obj[data.checkin_id] = row;
-		store.commit('UPDATE_CHECKINS', obj);
+		row.time_out = now;
+		row.last_updated = now;
+		store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
 	},
 
 	checkout_remove: (store, data) => {
+		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 		let row = store.state.checkins[data.checkin_id];
 		row.time_out = null;
-		let obj = {};
-		obj[data.checkin_id] = row;
-		store.commit('UPDATE_CHECKINS', obj);
+		row.last_updated = now;
+		store.commit('UPDATE_CHECKINS', { [data.checkin_id]: row });
 	},
 
 	set_in_gym_only: (store, value) => {

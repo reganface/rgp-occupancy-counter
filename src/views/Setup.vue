@@ -2,7 +2,9 @@
 	<v-row align="center" justify="center" class="fill-height">
 		<v-col cols="12" sm="8" md="6" lg="4" xl="3" class="text-center">
 			<div class="display-3 mb-12">Setup</div>
-			<v-alert v-if="error" type="error">{{ error }}</v-alert>
+			<v-fade-transition>
+				<v-alert v-if="error" type="error">{{ error }}</v-alert>
+			</v-fade-transition>
 
 			<transition name="fade" mode="out-in">
 
@@ -13,16 +15,26 @@
 				</div>
 
 				<!-- Installation type and API info -->
-				<div v-else-if="screen == 'step1'" key="step1">
+				<div v-else-if="screen == 'step1'" key="step1" class="loading-container">
 					<v-select v-model="form.master" :items="master_select" label="Installation Type" />
-					<v-text-field v-model="form.api_user" label="RGP API User" />
-					<v-text-field v-model="form.api_key" label="RGP API Key" type="password" />
-					<v-text-field v-model="form.api_base_url" label="RGP API Base URL" />
 
-					<v-btn @click="check_api" :loading="loading" color="primary">
+					<v-fade-transition>
+						<div v-if="form.master">
+							<v-text-field v-model="form.api_user" label="RGP API User" />
+							<v-text-field v-model="form.api_key" label="RGP API Key" type="password" />
+							<v-text-field v-model="form.api_base_url" label="RGP API Base URL" />
+						</div>
+					</v-fade-transition>
+
+					<v-btn @click="master_or_client" :loading="loading" color="primary">
 						Next
 						<v-icon>mdi-chevron-right</v-icon>
 					</v-btn>
+
+					<div v-if="!form.master && loading" class="loading-bar">
+						<v-progress-linear v-model="progress" color="primary" />
+						<div class="caption">Scanning Network...</div>
+					</div>
 
 				</div>
 
@@ -50,6 +62,7 @@
 
 <script>
 import { update } from '@/services/ajax.js';
+import scan from '@/services/scanner.js';
 
 export default {
 	data: () => ({
@@ -77,6 +90,10 @@ export default {
 
 		has_errors() {
 			return this.errors.length > 0;
+		},
+
+		progress() {
+			return this.$store.getters['setup/scan_progress'];
 		}
 	},
 
@@ -86,6 +103,13 @@ export default {
 			Object.assign(this.form, this.settings);
 		},
 
+		// determing if we are setting up as master or as a client
+		master_or_client() {
+			if (this.form.master) this.check_api();
+			else this.find_master();
+		},
+
+		// validate and test rgp api credentials
 		async check_api() {
 			this.error = "";
 			this.loading = true;
@@ -104,6 +128,22 @@ export default {
 				this.location_select = Object.values(result);
 
 				this.screen = "step2"
+			} catch (err) {
+				this.error = err;
+			} finally {
+				this.loading = false;
+			}
+
+		},
+
+		// find master on the network
+		async find_master() {
+			try {
+				this.loading = true;
+				this.error = "";
+				let result = await scan();
+				console.log(result);
+
 			} catch (err) {
 				this.error = err;
 			} finally {
@@ -136,5 +176,14 @@ export default {
 </script>
 
 <style scoped>
+.loading-container {
+	position: relative;
+}
 
+.loading-bar {
+	position: absolute;
+	bottom: -50px;
+	left: 0;
+	right: 0;
+}
 </style>
