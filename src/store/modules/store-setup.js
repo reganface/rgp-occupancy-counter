@@ -14,6 +14,8 @@ export const state = {
 		api_key: "",
 		api_base_url: "https://api.rockgympro.com/v1",
 		location_tag: "",
+		master_ip: "",
+		master_port: 3000,
 		max_duration: 180,		// time in minutes
 		max_customers: 50
 	},
@@ -28,6 +30,7 @@ export const getters = {
 	max_duration: state => state.settings.max_duration,
 	max_customers: state => state.settings.max_customers,
 	master: state => state.settings.master,
+	master_path: state => `http://${state.settings.master_ip}:${state.settings.master_port}`,
 	scan_progress: state => state.scan_progress
 };
 
@@ -41,6 +44,7 @@ export const actions = {
 		update(settings);
 	},
 
+	// ping RGP's API - if we get 'pong' save credentials to disk
 	check_api: async (store, data) => {
 		await get('/ping');
 		store.dispatch('update_settings', data)
@@ -65,6 +69,8 @@ export const actions = {
 			api_key: "",
 			api_base_url: "https://api.rockgympro.com/v1",
 			location_tag: "",
+			master_ip: "",
+			master_port: 3000,
 			max_duration: 180,
 			max_customers: 50
 		};
@@ -72,7 +78,7 @@ export const actions = {
 		config.set('settings', defaults);						// save defaults to disk
 		config.delete('checkins');								// remove all checkins from disk
 		store.dispatch('checkins/stop', null, { root: true });	// stop auto refresh of check-ins
-		router.push({name: 'setup'});
+		router.push({ name: 'setup' });
 	},
 
 	update_scan_progress: (store, value) => {

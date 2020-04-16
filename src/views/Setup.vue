@@ -18,11 +18,23 @@
 				<div v-else-if="screen == 'step1'" key="step1" class="loading-container">
 					<v-select v-model="form.master" :items="master_select" label="Installation Type" />
 
-					<v-fade-transition>
-						<div v-if="form.master">
+					<v-fade-transition mode="out-in">
+						<div v-if="form.master === true" key="master">
 							<v-text-field v-model="form.api_user" label="RGP API User" />
 							<v-text-field v-model="form.api_key" label="RGP API Key" type="password" />
 							<v-text-field v-model="form.api_base_url" label="RGP API Base URL" />
+						</div>
+
+						<div v-else-if="form.master === false && manual_ip" key="advanced">
+							<div class="caption">
+								<a @click="manual_ip = false">Hide Advanced Options</a>
+							</div>
+							<v-text-field v-model="form.ip_addr" label="Server IP Address" />
+							<v-text-field v-model="form.port" type="number" label="Server Port" />
+						</div>
+
+						<div v-else-if="form.master === false" class="text-center caption mb-8" key="link">
+							<a @click="manual_ip = true">Advanced Options</a>
 						</div>
 					</v-fade-transition>
 
@@ -61,7 +73,7 @@
 </template>
 
 <script>
-import { update } from '@/services/ajax.js';
+import { update, get } from '@/services/ajax.js';
 import scan from '@/services/scanner.js';
 
 export default {
@@ -72,7 +84,9 @@ export default {
 			api_user: "",
 			api_key: "",
 			api_base_url: "",
-			location_tag: ""
+			location_tag: "",
+			ip_addr: "",
+			port: 3000
 		},
 		master_select: [
 			{ text: "This computer will be the Master", value: true},
@@ -80,7 +94,8 @@ export default {
 		],
 		location_select: [],
 		error: "",
-		loading: false
+		loading: false,
+		manual_ip: false
 	}),
 
 	computed: {
@@ -120,7 +135,7 @@ export default {
 				// update connection details on axios instance
 				update(this.form);
 
-				// check connection
+				// check connection & save details
 				await this.$store.dispatch('setup/check_api', this.form);
 
 				// get locations
@@ -136,13 +151,32 @@ export default {
 
 		},
 
-		// find master on the network
+		// find master server on the network
 		async find_master() {
 			try {
 				this.loading = true;
 				this.error = "";
-				let result = await scan();
-				console.log(result);
+
+				if (this.form.ip_addr && this.manual_ip) {
+					// do not scan, just test the entered ip address
+					let result = await get(`http://${this.form.ip_addr}:${this.form.port}/ping`);
+					if (result !== "pong") throw "Could not find master at this IP and Port";
+
+				} else {
+					// scan for master
+					let result = await scan();
+
+					// ip found
+					this.form.ip_addr = result;
+				}
+
+				// update axios connection details to be for the master server
+				update(this.form);
+
+				// save connection info to disk
+				this.form.init = true;
+				await this.$store.dispatch('setup/update_settings', this.form);
+				this.$router.push({ name: 'home' });	// redirect to home page
 
 			} catch (err) {
 				this.error = err;
@@ -162,7 +196,7 @@ export default {
 					init: true
 				};
 				await this.$store.dispatch('setup/update_settings', new_settings);
-				this.$router.push({name: 'home'});
+				this.$router.push({ name: 'home' });
 
 				// start auto refresh
 				this.$store.dispatch('checkins/run');

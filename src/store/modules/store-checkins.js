@@ -51,12 +51,18 @@ export const getters = {
 export const actions = {
 	run: async store => {
 		store.commit('SET_CHECKINS', config.get(`checkins.${today}`, {}));	// load any saved checkins from disk
-		let last_checkin_id = store.getters['last_checkin_id'];		// get most recent checkin id
-		await store.dispatch('get_rgp_checkins', last_checkin_id);	// initial load
-		last_checkin_id = store.getters['last_checkin_id'];
+		await store.dispatch('get_rgp_checkins', store.getters['last_checkin_id']);	// initial load
 
 		store.state.refresh_interval = setInterval(() => {
-			store.dispatch('get_rgp_checkins', last_checkin_id);
+			store.dispatch('get_rgp_checkins', store.getters['last_checkin_id']);
+		}, store.state.refresh_rate);
+	},
+
+	run_as_client: async store => {
+		await store.dispatch('get_master_checkins', store.getters['last_update_time']);
+
+		store.state.refresh_interval = setInterval(() => {
+			store.dispatch('get_master_checkins', store.getters['last_update_time']);
 		}, store.state.refresh_rate);
 	},
 
@@ -90,6 +96,11 @@ export const actions = {
 		});
 		store.commit('UPDATE_CHECKINS', checkins);
 		store.dispatch('lookup_new_names', checkins);
+	},
+
+	get_master_checkins: async (store, last_update_time) => {
+		let result = await get(`/checkins/${last_update_time}`);
+		// TODO: finish this next
 	},
 
 

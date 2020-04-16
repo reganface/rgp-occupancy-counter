@@ -10,13 +10,25 @@ const api_client = axios.create({
 
 // update the connection details
 export function update(params) {
-	const token = Buffer.from(`${params.api_user}:${params.api_key}`, 'utf8').toString('base64');
-	api_client.defaults.headers.common = {
-		"Authorization": `Basic ${token}`,
-		"Accept": "application/json",
-		"Content-Type": "application/json"
-	};
-	api_client.defaults.baseURL = params.api_base_url;
+	if (params.master) {
+		// set up to connect to RGP API
+		const token = Buffer.from(`${params.api_user}:${params.api_key}`, 'utf8').toString('base64');
+		api_client.defaults.headers.common = {
+			"Authorization": `Basic ${token}`,
+			"Accept": "application/json",
+			"Content-Type": "application/json"
+		};
+		api_client.defaults.baseURL = params.api_base_url;
+
+	} else {
+		// connect to a master server
+		api_client.defaults.headers.common = {
+			"Accept": "application/json",
+			"Content-Type": "application/json"
+		};
+		api_client.defaults.baseURL = `http://${params.ip_addr}:${params.port}`;
+	}
+
 }
 
 

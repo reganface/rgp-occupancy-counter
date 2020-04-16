@@ -69,8 +69,16 @@ export default {
 
 	async created() {
 		await this.$store.dispatch('setup/init');
-		if (this.init) this.$store.dispatch('checkins/run');	// start auto refresh if setup is complete
-		if (this.master) start_server();		// start http server if this is the master client
+		if (this.init) {
+			// setup has been completed
+			if (this.master) {
+				this.$store.dispatch('checkins/run');	// start auto refresh
+				start_server();		// start http server
+			} else {
+				this.$store.dispatch('checkins/run_as_client');	// auto refresh from master server
+			}
+		}
+
 	},
 
 	beforeDestroy() {

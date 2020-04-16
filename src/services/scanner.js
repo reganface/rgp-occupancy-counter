@@ -53,8 +53,6 @@ const search = async () => {
 const ping = async test_ip => {
 	try {
 		let result = await get(`http://${test_ip}:${port}/ping`);
-
-
 		if (result !== "pong") throw "Not the correct server";
 
 		// master address found
@@ -63,7 +61,7 @@ const ping = async test_ip => {
 		remaining = 0;
 
 	} catch (err) {
-		//console.log(err);
+		// nothing to do here
 	} finally {
 		inflight--;
 		remaining--;
