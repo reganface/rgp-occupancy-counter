@@ -9,6 +9,10 @@
 
 			<v-spacer />
 
+			<v-btn :to="{name: 'generate'}" icon title="Generate Check-Ins" x-large>
+				<v-icon>mdi-account-multiple-plus</v-icon>
+			</v-btn>
+
 			<v-btn :to="{name: 'settings'}" icon title="settings" x-large>
 				<v-icon>mdi-cog-outline</v-icon>
 			</v-btn>

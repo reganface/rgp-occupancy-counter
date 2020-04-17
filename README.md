@@ -1,3 +1,9 @@
+# Generate Check-Ins
+This branch is purely for stress testing the JSON storage system.
+
+---
+---
+
 # RGP Occupancy Counter
 This is a simple tool that ties into Rock Gym Pro to help keep track of how many people are in the facility at any one time.  It was created for use during the COVID-19 recovery period where gyms will almost certainly be forced to limit the amount of people in the gym at once.  The current day's check-ins are loaded from the RGP API and then staff are able to "check-out" a customer when they leave.
 
