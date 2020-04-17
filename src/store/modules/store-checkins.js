@@ -60,11 +60,13 @@ export const actions = {
 	// start auto refresh as master
 	run: async store => {
 		store.commit('SET_CHECKINS', config.get(`checkins.${today}`, {}));	// load any saved checkins from disk
+		/*
 		await store.dispatch('get_rgp_checkins', store.getters['last_checkin_id']);	// initial load
 
 		store.state.refresh_interval = setInterval(() => {
 			store.dispatch('get_rgp_checkins', store.getters['last_checkin_id']);
 		}, store.state.refresh_rate);
+		*/
 	},
 
 	// start auto refresh as client

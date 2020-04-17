@@ -69,7 +69,7 @@
 </template>
 
 <script>
-import { format, subDays, parseISO, eachDayOfInterval, addSeconds, addHours } from 'date-fns';
+import { format, subDays, parseISO, eachDayOfInterval, addSeconds, addHours, isSameDay } from 'date-fns';
 import { forEach } from 'lodash';
 import { config } from '@/services/db.js';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -107,6 +107,12 @@ export default {
 					let time_in = format(addSeconds(start_today, checkin_interval * i), 'yyyy-MM-dd HH:mm:ss');
 					let time_out = format(addHours(parseISO(time_in), 2), 'yyyy-MM-dd HH:mm:ss');
 
+					if (isSameDay(day, now)) {
+						// it's today, prevent future check-ins and do not check-out everyone
+						if (parseISO(time_in) > now) break;
+						if (parseISO(time_out) > now) time_out = null;
+					}
+
 					let checkin = {
 						checkin_id: checkin_id,
 						customer_guid: customer_guid,
@@ -114,7 +120,7 @@ export default {
 						details: "OK",
 						postdate: time_in,
 						time_out: time_out,
-						last_updated: time_out
+						last_updated: time_out ? time_out : time_in
 					}
 
 					checkins[formatted_date][checkin_id] = checkin;
@@ -122,8 +128,14 @@ export default {
 				}
 			});
 
+			// clear any existing checkins
+			this.$store.dispatch('checkins/stop');
+
 			// save checkins to disk
 			config.set('checkins', checkins);
+
+			// load from disk into store
+			this.$store.dispatch('checkins/run');
 
 		},
 
@@ -139,11 +151,12 @@ export default {
 			let lastnames = ["Anderson", "Ashwoon", "Aikin", "Bateman", "Bongard", "Bowers", "Boyd", "Cannon", "Cast", "Deitz", "Dewalt", "Ebner", "Frick", "Hancock", "Haworth", "Hesch", "Hoffman", "Kassing", "Knutson", "Lawless", "Lawicki", "Mccord", "McCormack", "Miller", "Myers", "Nugent", "Ortiz", "Orwig", "Ory", "Paiser", "Pak", "Pettigrew", "Quinn", "Quizoz", "Ramachandran", "Resnick", "Sagar", "Schickowski", "Schiebel", "Sellon", "Severson", "Shaffer", "Solberg", "Soloman", "Sonderling", "Soukup", "Soulis", "Stahl", "Sweeney", "Tandy", "Trebil", "Trusela", "Trussel", "Turco", "Uddin", "Uflan", "Ulrich", "Upson", "Vader", "Vail", "Valente", "Van Zandt", "Vanderpoel", "Ventotla", "Vogal", "Wagle", "Wagner", "Wakefield", "Weinstein", "Weiss", "Woo", "Yang", "Yates", "Yocum", "Zeaser", "Zeller", "Ziegler", "Bauer", "Baxster", "Casal", "Cataldi", "Caswell", "Celedon", "Chambers", "Chapman", "Christensen", "Darnell", "Davidson", "Davis", "DeLorenzo", "Dinkins", "Doran", "Dugelman", "Dugan", "Duffman", "Eastman", "Ferro", "Ferry", "Fletcher", "Fietzer", "Hylan", "Hydinger", "Illingsworth", "Ingram", "Irwin", "Jagtap", "Jenson", "Johnson", "Johnsen", "Jones", "Jurgenson", "Kalleg", "Kaskel", "Keller", "Leisinger", "LePage", "Lewis", "Linde", "Lulloff", "Maki", "Martin", "McGinnis", "Mills", "Moody", "Moore", "Napier", "Nelson", "Norquist", "Nuttle", "Olson", "Ostrander", "Reamer", "Reardon", "Reyes", "Rice", "Ripka", "Roberts", "Rogers", "Root", "Sandstrom", "Sawyer", "Schlicht", "Schmitt", "Schwager", "Schutz", "Schuster", "Tapia", "Thompson", "Tiernan", "Tisler"];
 			let first_index = Math.floor(Math.random() * Math.floor(firstnames.length));
 			let last_index = Math.floor(Math.random() * Math.floor(lastnames.length));
-			return `${firstnames[first_index]} ${lastnames[last_index]}`;
+			return `${lastnames[last_index]}, ${firstnames[first_index]}`;
 		},
 
 		clear() {
 			config.delete('checkins');
+			this.$store.dispatch('checkins/stop');
 		}
 	}
 }
