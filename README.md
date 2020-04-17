@@ -34,3 +34,4 @@ Once you've downloaded the repo, you'll need to install any dependencies with `n
 - If RGP's check-in API is updated to include customer details, remove the customer lookup functions
 - Encrypt api key for storage?  There is an NPM package that can use the built in Windows Data Protection API so that it could be encrypted by the user profile. `windows.security.cryptography.dataprotection`
 - Add some UI indication on whether the current instance is setup as master or client.  Also connection status and info?
+- Tweak production build settings for electron-builder.  Seems to be building multiple package styles right now.
