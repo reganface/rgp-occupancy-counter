@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, Menu } from 'electron'
 import { createProtocol, installVueDevtools } from 'vue-cli-plugin-electron-builder/lib'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
@@ -12,15 +12,21 @@ let win
 protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { secure: true, standard: true } }])
 
 function createWindow() {
+	// remove menu bar in production
+	if (!isDevelopment) Menu.setApplicationMenu(false)
+
 	// Create the browser window.
 	win = new BrowserWindow({
-		width: 1800,
-		height: 1200,
+		width: 1200,
+		height: 800,
 		webPreferences: {
 			nodeIntegration: true,
 			webSecurity: false		// prevent preflight cors options request
-		}
+		},
+		title: "RGP Occupancy Counter"
 	})
+
+	win.maximize()		// start maximized
 
 	if (process.env.WEBPACK_DEV_SERVER_URL) {
 		// Load the url of the dev server if in development mode
