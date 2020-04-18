@@ -38,9 +38,9 @@
 			:custom-filter="filter_customers"
 		>
 			<template v-slot:body="{ items }">
-				<tbody v-if="items.length > 0" name="animate-table" is="transition-group">
+				<tbody v-if="items.length > 0" :name="disable_transitions ? '' : 'animate-table'" is="transition-group">
 					<template>
-						<tr v-for="item in items" :key="item.checkin_id" :class="{inactive: item.time_out}" class="animate-table-item">
+						<tr v-for="item in items" :key="item.checkin_id" :class="{inactive: item.time_out, 'animate-table-item': !disable_transitions}">
 							<td>{{ item.postdate | checkin_time }}</td>
 							<td>
 								<!-- display button to allow manual name lookup when it failed previously -->
@@ -56,7 +56,7 @@
 							<td>{{ item.details }}</td>
 							<td :class="{'red--text': check_duration(item)}">{{ time_in_gym(item) }}</td>
 							<td class="text-center">
-								<transition name="fade" mode="out-in">
+								<transition :name="disable_transitions ? '' : 'fade'" mode="out-in">
 									<!-- button and confirmation dialog for check-out -->
 									<confirm-dialog v-if="!item.time_out" @confirm="checkout(item)">
 										<template v-slot:activator="{ on }">
@@ -137,6 +137,10 @@ export default {
 
 		max_duration() {
 			return this.$store.getters['setup/max_duration'];
+		},
+
+		disable_transitions() {
+			return this.$store.getters['setup/disable_transitions'];
 		}
 	},
 
