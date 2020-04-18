@@ -2,11 +2,11 @@
 	<v-row align="center" justify="center" class="fill-height">
 		<v-col cols="12" sm="8" md="6" lg="4" xl="3" class="text-center">
 			<div class="display-3 mb-12">Setup</div>
-			<v-fade-transition>
+			<transition :name="disable_transitions ? '' : 'fade'">
 				<v-alert v-if="error" type="error">{{ error }}</v-alert>
-			</v-fade-transition>
+			</transition>
 
-			<transition name="fade" mode="out-in">
+			<transition :name="disable_transitions ? '' : 'fade'" mode="out-in">
 
 				<!-- Welcome Screen -->
 				<div v-if="screen == 'welcome'" key="welcome">
@@ -18,7 +18,7 @@
 				<div v-else-if="screen == 'step1'" key="step1" class="loading-container">
 					<v-select v-model="form.master" :items="master_select" label="Installation Type" />
 
-					<v-fade-transition mode="out-in">
+					<transition :name="disable_transitions ? '' : 'fade'" mode="out-in">
 						<!-- options for master -->
 						<div v-if="form.master === true" key="master">
 							<v-text-field v-model="form.api_user" label="RGP API User" />
@@ -39,7 +39,7 @@
 						<div v-else-if="form.master === false" class="text-center caption mb-8" key="link">
 							<a @click="manual_ip = true">Advanced Options</a>
 						</div>
-					</v-fade-transition>
+					</transition>
 
 					<v-btn @click="master_or_client" :loading="loading" color="primary">
 						Next
@@ -113,6 +113,10 @@ export default {
 
 		progress() {
 			return this.$store.getters['setup/scan_progress'];
+		},
+
+		disable_transitions() {
+			return this.$store.getters['setup/disable_transitions'];
 		}
 	},
 
