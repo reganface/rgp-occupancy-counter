@@ -48,6 +48,15 @@
 
 				<v-row>
 					<v-col>
+						Disable transitions. Can be helpful for slower computers
+					</v-col>
+					<v-col>
+						<v-switch v-model="disable_transitions" hide-details class="mt-0 pt-0" />
+					</v-col>
+				</v-row>
+
+				<v-row>
+					<v-col>
 						My Eyes! The goggles do nothing! (Dark Mode)
 					</v-col>
 					<v-col>
@@ -121,9 +130,14 @@ export default {
 			return `${hours}:${minutes}`;
 		},
 
+		disable_transitions: {
+			get() { return this.$store.getters['setup/disable_transitions'] },
+			set(value) { this.$store.dispatch('setup/update_client_settings', { disable_transitions: value }) }
+		},
+
 		dark_theme: {
-			get() { return this.$vuetify.theme.dark },
-			set(value) { this.$vuetify.theme.dark = value }
+			get() { return this.$store.getters['setup/dark_mode'] },
+			set(value) { this.$store.dispatch('setup/update_client_settings', { dark_mode: value }) }
 		},
 
 		master() {

@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="show" persistent max-width="410">
+	<v-dialog v-model="show" persistent max-width="410" :transition="disable_transitions ? false : 'dialog-transition'">
 		<template v-slot:activator="{ on }">
 			<slot v-bind:on="on" name="activator" />
 		</template>
@@ -25,6 +25,12 @@ export default {
 	data: () => ({
 		show: false
 	}),
+
+	computed: {
+		disable_transitions() {
+			return this.$store.getters['setup/disable_transitions'];
+		}
+	},
 
 	methods: {
 		cancel() {

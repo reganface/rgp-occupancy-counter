@@ -24,7 +24,7 @@
 
 		<v-content>
 			<v-container class="full-height">
-				<transition name="fade" mode="out-in">
+				<transition :name="disable_transitions ? '' : 'fade'" mode="out-in">
 					<router-view :key="$route.name + ($route.params.type || '')"/>
 				</transition>
 			</v-container>
@@ -64,6 +64,10 @@ export default {
 
 		master() {
 			return this.$store.getters['setup/settings'].master;
+		},
+
+		disable_transitions() {
+			return this.$store.getters['setup/disable_transitions'];
 		}
 	},
 
