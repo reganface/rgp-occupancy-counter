@@ -2,15 +2,15 @@ import store from '@/store/store.js';
 import { parseISO } from 'date-fns';
 import express from 'express';
 const app = express();
-const port = 3000;
 let server = null;
 
 app.use(express.json());
 
 // start the http server to listen for other clients
 export const start_server = () => {
+	let port = store.getters['setup/master_port'];
 	server = app.listen(port, () => {
-		console.log('Server listening on port ', port);
+		console.log('Server listening on port', port);
 	}).on('error', err => {
 		if (err.code === 'EADDRINUSE') {
 			// this port is in use
