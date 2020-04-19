@@ -6,22 +6,24 @@ import Vuetify from '@/plugins/vuetify'
 
 export const namespaced = true;
 
+const default_settings = {
+	init: false,
+	master: null,
+	api_user: "",
+	api_key: "",
+	api_base_url: "https://api.rockgympro.com/v1",
+	location_tag: "",
+	master_ip: "",
+	master_port: 3000,		// time in minutes
+	max_duration: 180,
+	max_customers: 50
+};
+
 /*******************
  *	STATE
  *******************/
 export const state = {
-	settings: {
-		init: false,
-		master: null,
-		api_user: "",
-		api_key: "",
-		api_base_url: "https://api.rockgympro.com/v1",
-		location_tag: "",
-		master_ip: "",
-		master_port: 3000,
-		max_duration: 180,		// time in minutes
-		max_customers: 50
-	},
+	settings: default_settings,
 	client_settings: {
 		dark_mode: false,
 		disable_transitions: false
@@ -41,6 +43,8 @@ export const getters = {
 	max_customers: state => state.settings.max_customers,
 	master: state => state.settings.master,
 	master_path: state => `http://${state.settings.master_ip}:${state.settings.master_port}`,
+	master_port: state => state.settings.master_port,
+	master_ip: state => state.settings.master_ip,
 	dark_mode: state => state.client_settings.dark_mode,
 	disable_transitions: state => state.client_settings.disable_transitions,
 	scan_progress: state => state.scan_progress
@@ -94,21 +98,17 @@ export const actions = {
 
 	// remove all check-ins and reset settings to defaults
 	purge: store => {
-		let defaults = {
-			init: false,
-			master: null,
-			api_user: "",
-			api_key: "",
-			api_base_url: "https://api.rockgympro.com/v1",
-			location_tag: "",
-			master_ip: "",
-			master_port: 3000,
-			max_duration: 180,
-			max_customers: 50
-		};
-		store.commit('SET_SETTINGS', defaults);					// settings to defaults
-		config.set('settings', defaults);						// save defaults to disk
+		store.commit('SET_SETTINGS', default_settings);			// settings to defaults
+		config.set('settings', default_settings);				// save defaults to disk
 		config.delete('checkins');								// remove all checkins from disk
+		store.dispatch('checkins/stop', null, { root: true });	// stop auto refresh of check-ins
+		router.push({ name: 'setup' });
+	},
+
+	// reset the client config to defaults
+	reset: store => {
+		store.commit('SET_SETTINGS', default_settings);			// settings to defaults
+		config.set('settings', default_settings);				// save defaults to disk
 		store.dispatch('checkins/stop', null, { root: true });	// stop auto refresh of check-ins
 		router.push({ name: 'setup' });
 	},
