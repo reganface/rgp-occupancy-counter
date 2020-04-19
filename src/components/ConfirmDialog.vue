@@ -12,8 +12,9 @@
 				<v-btn @click="cancel" text>
 					<slot name="cancel">Cancel</slot>
 				</v-btn>
-				<v-btn @click="confirm" color="primary">
-					<slot name="confirm">Confirm</slot>
+				<v-btn @click="confirm" color="primary" :disabled="delayed">
+					<template v-if="delayed">Wait...</template>
+					<slot v-else name="confirm">Confirm</slot>
 				</v-btn>
 			</v-card-actions>
 		</v-card>
@@ -22,8 +23,14 @@
 
 <script>
 export default {
+	props: {
+		delay: Boolean
+	},
+
 	data: () => ({
-		show: false
+		show: false,
+		delayed: false,
+		timeout: null
 	}),
 
 	computed: {
@@ -41,6 +48,18 @@ export default {
 		confirm() {
 			this.$emit('confirm');
 			this.show = false;
+		}
+	},
+
+	watch: {
+		// if delay is true, disable the confirm button for the first few seconds
+		show(new_value) {
+			if (this.delay && new_value) {
+				this.delayed = true;
+				this.timeout = setTimeout(() => this.delayed = false, 3000);
+			} else if (this.delay && !new_value) {
+				clearTimeout(this.timeout);
+			}
 		}
 	}
 }
