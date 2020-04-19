@@ -75,7 +75,7 @@
 					<div v-if="advanced_options">
 
 						<!-- advanced options for master -->
-						<template v-if="!master">
+						<template v-if="master">
 							<v-row>
 								<v-col cols="6">
 									Port that other clients will connect to.
