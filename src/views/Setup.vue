@@ -31,7 +31,7 @@
 							<div class="caption">
 								<a @click="manual_ip = false">Hide Advanced Options</a>
 							</div>
-							<v-text-field v-model="form.ip_addr" label="Server IP Address" />
+							<v-text-field v-model="form.master_ip" label="Server IP Address" />
 							<v-text-field v-model="form.port" type="number" label="Server Port" />
 						</div>
 
@@ -89,7 +89,7 @@ export default {
 			api_key: "",
 			api_base_url: "",
 			location_tag: "",
-			ip_addr: "",
+			master_ip: "",
 			port: 3000
 		},
 		master_select: [
@@ -165,14 +165,14 @@ export default {
 				this.loading = true;
 				this.error = "";
 
-				if (this.form.ip_addr && this.manual_ip) {
+				if (this.form.master_ip && this.manual_ip) {
 					// do not scan, just test the entered ip address
-					let result = await get(`http://${this.form.ip_addr}:${this.form.port}/ping`);
+					let result = await get(`http://${this.form.master_ip}:${this.form.port}/ping`);
 					if (result !== "pong") throw "Could not find master at this IP and Port";
 
 				} else {
 					let result = await scan();	// scan for master
-					this.form.ip_addr = result;	// ip found
+					this.form.master_ip = result;	// ip found
 				}
 
 				// update axios connection details to be for the master server

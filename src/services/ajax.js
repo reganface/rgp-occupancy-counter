@@ -26,7 +26,7 @@ export function update(params) {
 			"Accept": "application/json",
 			"Content-Type": "application/json"
 		};
-		api_client.defaults.baseURL = `http://${params.ip_addr}:${params.port}`;
+		api_client.defaults.baseURL = `http://${params.master_ip}:${params.port}`;
 	}
 
 }
@@ -40,7 +40,7 @@ export async function get(path, params) {
 		if (response.status !== 200) throw response;
 		return resolve(response.data);
 	} catch (response) {
-		let msg = `${response.status} - ${response.data.message}`;
+		let msg = response.status ? `${response.status} - ${response.data.message}` : response;
 		store.dispatch('notify/notify', { msg });
 		return reject(msg);
 	} finally {
@@ -56,7 +56,7 @@ export async function post(path, form_data) {
 		if (response.status !== 200) throw response;
 		return resolve(response.data);
 	} catch (response) {
-		let msg = `${response.status} - ${response.data.message}`;
+		let msg = response.status ? `${response.status} - ${response.data.message}` : response;
 		store.dispatch('notify/notify', { msg });
 		return reject(msg);
 	} finally {
