@@ -9,7 +9,11 @@
 
 			<v-spacer />
 
-			<v-btn :to="{name: 'settings'}" icon title="settings" x-large>
+			<v-btn :to="{name: 'tracing'}" icon title="Contact Tracing" x-large>
+				<v-icon>mdi-account-network</v-icon>
+			</v-btn>
+
+			<v-btn :to="{name: 'settings'}" icon title="Settings" x-large>
 				<v-icon>mdi-cog-outline</v-icon>
 			</v-btn>
 
