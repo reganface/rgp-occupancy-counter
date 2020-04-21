@@ -38,6 +38,7 @@
 <script>
 import NotifyBar from '@/components/NotifyBar.vue';
 import { start_server, stop_server } from '@/services/server.js';
+import { get } from '@/services/ajax.js';
 
 export default {
 	name: "App",
@@ -80,6 +81,8 @@ export default {
 				start_server();		// start http server
 			} else {
 				this.$store.dispatch('checkins/run_as_client');	// auto refresh from master server
+				let settings = await get('/settings');
+				this.$store.dispatch('setup/update_settings', settings);
 			}
 		}
 
