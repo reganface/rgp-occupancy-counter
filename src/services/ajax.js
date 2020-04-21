@@ -26,7 +26,7 @@ export function update(params) {
 			"Accept": "application/json",
 			"Content-Type": "application/json"
 		};
-		api_client.defaults.baseURL = `http://${params.master_ip}:${params.port}`;
+		api_client.defaults.baseURL = `http://${params.master_ip}:${params.master_port}`;
 	}
 
 }
