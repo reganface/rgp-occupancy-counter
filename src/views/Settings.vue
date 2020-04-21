@@ -271,6 +271,18 @@ export default {
 		master_port() {
 			this.port_changed = true;
 		}
+	},
+
+	async created() {
+		// if this is a client, refresh the max customers/duration settings from the master
+		if (!this.master) {
+			try {
+				let settings = await get('/settings');
+				this.$store.dispatch('setup/update_settings', settings);
+			} catch (err) {
+				// do nothing
+			}
+		}
 	}
 }
 </script>

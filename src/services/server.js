@@ -58,6 +58,12 @@ app.get('/checkins/:last_update', (request, response) => {
 });
 
 
+// get max customers and max duration values
+app.get('/settings', (request, response) => {
+	let max_duration = store.getters['setup/max_duration'];
+	let max_customers = store.getters['setup/max_customers'];
+	response.send({ max_duration, max_customers });
+});
 
 
 

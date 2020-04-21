@@ -7,15 +7,15 @@ import Vuetify from '@/plugins/vuetify'
 export const namespaced = true;
 
 const default_settings = {
-	init: false,
-	master: null,
+	init: false,	// state showing if initial setup has been completed
+	master: null,	// is this the master or a client
 	api_user: "",
 	api_key: "",
 	api_base_url: "https://api.rockgympro.com/v1",
 	location_tag: "",
 	master_ip: "",
-	master_port: 3000,		// time in minutes
-	max_duration: 180,
+	master_port: 3000,
+	max_duration: 180,		// time in minutes
 	max_customers: 50
 };
 
