@@ -172,7 +172,7 @@
 
 <script>
 import { start_server, stop_server } from '@/services/server.js';
-import { get } from '@/services/ajax.js';
+import { get, update } from '@/services/ajax.js';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 export default {
@@ -259,6 +259,15 @@ export default {
 				if (result !== "pong") throw "Could not find master at this IP and Port";
 
 				this.test_success = true;
+
+				// update axios path
+				let params = {
+					master: false,
+					master_ip: this.master_ip,
+					port: this.master_port
+				};
+				update(params);
+
 			} catch (err) {
 				this.test_error = err;
 			} finally {
