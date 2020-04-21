@@ -264,7 +264,7 @@ export default {
 				let params = {
 					master: false,
 					master_ip: this.master_ip,
-					port: this.master_port
+					master_port: this.master_port
 				};
 				update(params);
 
