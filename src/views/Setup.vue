@@ -78,6 +78,7 @@
 
 <script>
 import { update, get } from '@/services/ajax.js';
+import { start_server } from '@/services/server.js';
 import scan from '@/services/scanner.js';
 
 export default {
@@ -183,6 +184,9 @@ export default {
 				await this.$store.dispatch('setup/update_settings', this.form);
 				this.$router.push({ name: 'home' });	// redirect to home page
 
+				// start auto refresh
+				this.$store.dispatch('checkins/run_as_client');
+
 			} catch (err) {
 				this.error = err;
 			} finally {
@@ -206,6 +210,7 @@ export default {
 
 				// start auto refresh
 				this.$store.dispatch('checkins/run');
+				start_server();		// start http server
 
 			} catch (err) {
 				this.error = err;
