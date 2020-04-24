@@ -43,14 +43,33 @@
 					</v-col>
 				</v-row>
 
+				<v-row>
+					<v-col>
+						Contact With Customer
+					</v-col>
+					<v-col>
+						<v-form @submit.prevent="search_customer">
+							<v-text-field v-model="customer" label="[Last Name, First Name]">
+								<template v-slot:append-outer>
+									<v-btn type="submit" icon>
+										<v-icon>mdi-account-search</v-icon>
+									</v-btn>
+								</template>
+							</v-text-field>
+						</v-form>
+
+					</v-col>
+				</v-row>
+
 			</v-col>
 		</v-row>
 	</div>
 </template>
 
 <script>
-const { dialog } = require('electron').remote;
-import { writeFile } from 'fs';
+//const { dialog } = require('electron').remote;
+//import { writeFile } from 'fs';
+import Export from '@/services/export.js';
 import { config } from '@/services/db.js';
 import { format, parseISO } from 'date-fns';
 import { forEach } from 'lodash';
@@ -61,7 +80,8 @@ export default {
 		end_date: format(new Date(), "yyyy-MM-dd"),
 		datepicker_start: false,
 		datepicker_end: false,
-		today: format(new Date(), "yyyy-MM-dd")
+		today: format(new Date(), "yyyy-MM-dd"),
+		customer: ""
 	}),
 
 	computed: {
@@ -78,9 +98,11 @@ export default {
 
 	methods: {
 		export_csv() {
-			let start = parseISO(this.start_date);
-			let end = parseISO(this.end_date);
-			let csv = '"Check-In ID","Customer GUID","Name","Check-In Details","Time In","Time Out"\r\n';
+			const start = parseISO(this.start_date);
+			const end = parseISO(this.end_date);
+			const csv = new Export();
+			csv.set_default_path("checkins.csv");
+			csv.set_headers(["Check-In ID","Customer GUID","Name","Check-In Details","Time In","Time Out"]);
 
 			// I don't think the order of dates can be guaranteed
 			// we'll need to loop through entire object and check every date
@@ -90,38 +112,31 @@ export default {
 				if (date >= start && date <= end) {
 					// in our range, loop through each check-in on this day
 					forEach(checkins, checkin => {
-						csv += `"${checkin.checkin_id}",`;
-						csv += `"${checkin.customer_guid}",`;
-						csv += `"${this.escape_csv(checkin.name)}",`;
-						csv += `"${this.escape_csv(checkin.details)}",`;
-						csv += `"${checkin.postdate}",`;
-						csv += `"${checkin.time_out}"`;
-						csv += `\r\n`;
+						let row = [];
+						row.push(checkin.checkin_id);
+						row.push(checkin.customer_guid);
+						row.push(checkin.name);
+						row.push(checkin.details);
+						row.push(checkin.postdate);
+						row.push(checkin.time_out);
+						csv.add_row(row);
 					});
 				}
 			});
 
-			// save file prompt
-			let save_path = dialog.showSaveDialog({
-				title: "Save File As...",
-				defaultPath: "*/checkins.csv",
-				filters: [
-					{ name: 'CSV Files', extensions: ['csv'] }
-				]
+			csv.save(err => {
+				if (err) this.$store.dispatch('notify/notify', { msg: err });
 			});
 
-			// save file if save was selected
-			if (save_path) {
-				writeFile(save_path, csv, 'utf8', err => {
-					if (err) this.$store.dispatch('notify/notify', { msg: err });
-				});
-			}
+
 		},
 
-		// escape csv characters in a string
-		escape_csv(s) {
-			s = s.replace('"', '"""');
-			return s;
+		search_customer() {
+			this.customer = this.customer.trim();
+			if (!this.customer) return;
+
+
+
 		}
 	},
 
