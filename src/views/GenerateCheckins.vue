@@ -102,8 +102,8 @@ export default {
 
 				// loop through number of check-ins per day
 				for(let i = 0; i < this.checkins_per_day; i++) {
-					let customer_guid = this.fake_uuid();
 					let name = this.fake_name();
+					let customer_guid = this.fake_uuid(name);
 					let time_in = format(addSeconds(start_today, checkin_interval * i), 'yyyy-MM-dd HH:mm:ss');
 					let time_out = format(addHours(parseISO(time_in), 2), 'yyyy-MM-dd HH:mm:ss');
 
@@ -139,11 +139,16 @@ export default {
 
 		},
 
-		fake_uuid() {
+		fake_uuid(name) {
+			// changed this to just be taken from the first/last name so that name and guid will be linked
+			return name.toLowerCase().replace(/[, ]/gi, '');
+
+			/* old method - random uuid
 			// https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
 			return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
 				(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
 			);
+			*/
 		},
 
 		fake_name() {
