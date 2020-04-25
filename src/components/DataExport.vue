@@ -1,7 +1,8 @@
 <template>
 	<div>
 		<div class="text-center title py-5 font-weight-light">
-			Export all check-in/check-out data that's been stored in this application.
+			DIY contact tracing.
+			Export all check-in/check-out data that's been stored in this application, so that you can work your spreadsheet magic!
 			The default date range will export all check-ins, but other dates can be selected to grab just a section of data.
 			Data is exported to a CSV file.
 		</div>
