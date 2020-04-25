@@ -72,6 +72,8 @@
 import { format, subDays, parseISO, eachDayOfInterval, addSeconds, addHours, isSameDay } from 'date-fns';
 import { forEach } from 'lodash';
 import { config } from '@/services/db.js';
+import { createReadStream } from 'fs';
+import csv_parser from 'csv-parser';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 export default {
@@ -86,13 +88,22 @@ export default {
 	}),
 
 	methods: {
-		generate() {
+		async generate() {
 			let start = parseISO(`${this.start_date} 06:00:00`);
 			let now = new Date();
 			let dates = eachDayOfInterval({ start: start, end: now });
 			let checkin_interval = Math.round(57600 / this.checkins_per_day);	// number of seconds between each checkin in a 16 hour business day
 			let checkin_id = 1;
 			let checkins = {};
+
+			// get a list of names and guids
+			let name_list = [];
+			try {
+				name_list = await this.load_names_and_guids();
+			} catch (err) {
+				this.$store.dispatch('notify/notify', { msg: err });
+				return;
+			}
 
 			// loop through each day
 			forEach(dates, day => {
@@ -102,8 +113,6 @@ export default {
 
 				// loop through number of check-ins per day
 				for(let i = 0; i < this.checkins_per_day; i++) {
-					let name = this.fake_name();
-					let customer_guid = this.fake_uuid(name);
 					let time_in = format(addSeconds(start_today, checkin_interval * i), 'yyyy-MM-dd HH:mm:ss');
 					let time_out = format(addHours(parseISO(time_in), 2), 'yyyy-MM-dd HH:mm:ss');
 
@@ -113,15 +122,18 @@ export default {
 						if (parseISO(time_out) > now) time_out = null;
 					}
 
+					// get random customer from name list
+					let rand_index = Math.floor(Math.random() * Math.floor(name_list.length));
+					let random_customer = name_list[rand_index];
+
 					let checkin = {
 						checkin_id: checkin_id,
-						customer_guid: customer_guid,
-						name: name,
 						details: "OK",
 						postdate: time_in,
 						time_out: time_out,
-						last_updated: time_out ? time_out : time_in
-					}
+						last_updated: time_out ? time_out : time_in,
+						...random_customer
+					};
 
 					checkins[formatted_date][checkin_id] = checkin;
 					checkin_id++;
@@ -139,24 +151,23 @@ export default {
 
 		},
 
-		fake_uuid(name) {
-			// changed this to just be taken from the first/last name so that name and guid will be linked
-			return name.toLowerCase().replace(/[, ]/gi, '');
-
-			/* old method - random uuid
-			// https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
-			return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-				(c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-			);
-			*/
-		},
-
-		fake_name() {
-			let firstnames = ["Adam", "Alex", "Aaron", "Ben", "Carl", "Dan", "David", "Edward", "Fred", "Frank", "George", "Hal", "Hank", "Ike", "John", "Jack", "Joe", "Larry", "Monte", "Matthew", "Mark", "Nathan", "Otto", "Paul", "Peter", "Roger", "Roger", "Steve", "Thomas", "Tim", "Ty", "Victor", "Walter"];
-			let lastnames = ["Anderson", "Ashwoon", "Aikin", "Bateman", "Bongard", "Bowers", "Boyd", "Cannon", "Cast", "Deitz", "Dewalt", "Ebner", "Frick", "Hancock", "Haworth", "Hesch", "Hoffman", "Kassing", "Knutson", "Lawless", "Lawicki", "Mccord", "McCormack", "Miller", "Myers", "Nugent", "Ortiz", "Orwig", "Ory", "Paiser", "Pak", "Pettigrew", "Quinn", "Quizoz", "Ramachandran", "Resnick", "Sagar", "Schickowski", "Schiebel", "Sellon", "Severson", "Shaffer", "Solberg", "Soloman", "Sonderling", "Soukup", "Soulis", "Stahl", "Sweeney", "Tandy", "Trebil", "Trusela", "Trussel", "Turco", "Uddin", "Uflan", "Ulrich", "Upson", "Vader", "Vail", "Valente", "Van Zandt", "Vanderpoel", "Ventotla", "Vogal", "Wagle", "Wagner", "Wakefield", "Weinstein", "Weiss", "Woo", "Yang", "Yates", "Yocum", "Zeaser", "Zeller", "Ziegler", "Bauer", "Baxster", "Casal", "Cataldi", "Caswell", "Celedon", "Chambers", "Chapman", "Christensen", "Darnell", "Davidson", "Davis", "DeLorenzo", "Dinkins", "Doran", "Dugelman", "Dugan", "Duffman", "Eastman", "Ferro", "Ferry", "Fletcher", "Fietzer", "Hylan", "Hydinger", "Illingsworth", "Ingram", "Irwin", "Jagtap", "Jenson", "Johnson", "Johnsen", "Jones", "Jurgenson", "Kalleg", "Kaskel", "Keller", "Leisinger", "LePage", "Lewis", "Linde", "Lulloff", "Maki", "Martin", "McGinnis", "Mills", "Moody", "Moore", "Napier", "Nelson", "Norquist", "Nuttle", "Olson", "Ostrander", "Reamer", "Reardon", "Reyes", "Rice", "Ripka", "Roberts", "Rogers", "Root", "Sandstrom", "Sawyer", "Schlicht", "Schmitt", "Schwager", "Schutz", "Schuster", "Tapia", "Thompson", "Tiernan", "Tisler"];
-			let first_index = Math.floor(Math.random() * Math.floor(firstnames.length));
-			let last_index = Math.floor(Math.random() * Math.floor(lastnames.length));
-			return `${lastnames[last_index]}, ${firstnames[first_index]}`;
+		// loads in a csv list of names and guids
+		// csv should be two columns - "guid","lastname, firstname"
+		async load_names_and_guids() {
+			return new Promise((resolve, reject) => {
+				let data = [];
+				createReadStream('names.csv')
+					.pipe(csv_parser(['customer_guid', 'name']))
+					.on('data', row => {
+						data.push(row);
+					})
+					.on('end', () => {
+						return resolve(data);
+					})
+					.on('error', err => {
+						return reject(err);
+					});
+			});
 		},
 
 		clear() {
