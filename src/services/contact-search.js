@@ -69,14 +69,14 @@ export const date_range_contacts = (dates, ignore_guid) => {
 	forEach(dates, date => {
 		let day = date.start.substring(0, 10);	// get the day of this check-in from the postdate
 		let date_start = parseISO(date.start);
-		let date_end = parseISO(date.end);
+		let date_end = date.end ? parseISO(date.end) : parseISO(`${day} 23:59:59`);		// if there is no end date, make it the end of the day
 		let checkins_day = config.get(`checkins.${day}`);	// load all checkins from that day
 
 		// loop through all check-ins on this day and see what matches
 		forEach(checkins_day, checkin => {
 			if (checkin.customer_guid === ignore_guid) return;	// ignore this customer
 			let checkin_start = parseISO(checkin.postdate);
-			let checkin_end = parseISO(checkin.time_out);
+			let checkin_end = checkin.time_out ? parseISO(checkin.time_out) : parseISO(`${day} 23:59:59`);
 			if (date_end >= checkin_start && date_start <= checkin_end) {
 				// we've got some overlap
 				if (customer_list[checkin.customer_guid] === undefined) {
