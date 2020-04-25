@@ -59,7 +59,7 @@
 
 			<!-- contact search results -->
 			<div v-else-if="!empty(contact_result)" key="contact">
-				<!-- back and export buttons -->
+				<!-- back button -->
 				<v-row>
 					<v-col>
 						<v-btn @click="clear_search" color="primary" text>
@@ -67,35 +67,24 @@
 							Clear Search
 						</v-btn>
 					</v-col>
+				</v-row>
+
+				<v-row>
+					<v-col class="text-center title font-weight-light">
+						<span class="font-weight-bold">{{ contact_count | number }}</span> customers found
+					</v-col>
+				</v-row>
+
+				<!-- contact result/export -->
+				<v-row>
+					<v-col>
+						There are {{ contact_count | number }} customers that have overlapping check-ins with <span class="font-weight-bold">{{ selected_customer }}</span>
+						You can export a contact list along with each customer's overlapping check-in.
+					</v-col>
 					<v-col cols="auto">
 						<v-btn @click="export_contact_list" color="primary">
 							Export Contact List
 						</v-btn>
-					</v-col>
-				</v-row>
-
-				<!-- headline showing selected customer -->
-				<v-row>
-					<v-col class="title text-center">
-						<span class="font-weight-light">Overlapping Check-Ins with</span> {{ selected_customer }}
-					</v-col>
-				</v-row>
-
-				<!-- list of contacts -->
-				<v-row>
-					<v-col>
-						<v-list>
-							<v-list-item v-for="(customer, i) in contact_result" :key="i">
-								<v-row>
-									<v-col>
-										{{ customer.name }}
-									</v-col>
-									<v-col cols="auto">
-										{{ customer.checkins.length }} overlapping check-in<span v-if="customer.checkins.length != 1">s</span>
-									</v-col>
-								</v-row>
-							</v-list-item>
-						</v-list>
 					</v-col>
 				</v-row>
 			</div>
@@ -105,9 +94,8 @@
 </template>
 
 <script>
-import { config } from '@/services/db.js';
+import { lookup_customer, find_customer_contacts } from '@/services/contact-search.js';
 import { forEach, isEmpty } from 'lodash';
-import { parseISO } from 'date-fns';
 import Export from '@/services/export.js';
 
 export default {
@@ -121,6 +109,10 @@ export default {
 	computed: {
 		disable_transitions() {
 			return this.$store.getters['setup/disable_transitions'];
+		},
+
+		contact_count() {
+			return Object.keys(this.contact_result).length;
 		}
 	},
 
@@ -138,45 +130,7 @@ export default {
 
 		// search for a specific customer from our check-ins
 		search_customer() {
-			// if the search is an empty string, return
-			this.customer = this.customer.toLowerCase().trim();
-			if (!this.customer) return;
-
-			let customer_list = {};
-			let search_lastname = this.customer.split(",")[0];
-			let search_firstname = this.customer.split(",")[1];
-
-			let all_checkins = config.get('checkins');
-			forEach(all_checkins, checkins => {
-				// looping through each day of check-ins
-				forEach(checkins, checkin => {
-					// looping through each check-in for this day
-					if (!checkin.name) return;
-					let lastname = checkin.name.split(",")[0];
-					let firstname = checkin.name.split(",")[1];
-					let last_test = search_lastname ? lastname.toLowerCase().includes(search_lastname.trim()) : true;
-					let first_test = search_firstname ? firstname.toLowerCase().includes(search_firstname.trim()) : true;
-
-					if (last_test && first_test) {
-						// we've got a match!
-						// store the customer in an object as an array of all their check-ins
-
-						// check if we've come across this customer already
-						if (customer_list[checkin.customer_guid] === undefined) {
-							// new customer in search
-							customer_list[checkin.customer_guid] = {
-								name: checkin.name,
-								customer_guid: checkin.customer_guid,
-								checkins: []
-							};
-						}
-						customer_list[checkin.customer_guid].checkins.push(checkin);
-					}
-				});
-			});
-
-			this.search_result = customer_list;
-
+			this.search_result = lookup_customer(this.customer);
 		},
 
 		// customer selected, now search for all customers that had overlapping check-ins with this customer
@@ -184,58 +138,7 @@ export default {
 			this.search_result = {};	// clear customer search
 			this.customer = "";
 			this.selected_customer = customer.name;
-			let customer_list = {};
-
-			forEach(customer.checkins, customer_checkin => {
-				let day = customer_checkin.postdate.substring(0, 10);	// get the day of this check-in from the postdate
-				let customer_start = parseISO(customer_checkin.postdate);
-				let customer_end = parseISO(customer_checkin.time_out);
-				let checkins_day = config.get(`checkins.${day}`);	// load all checkins from that day
-
-				// loop through all check-ins on this day and see what matches
-				forEach(checkins_day, checkin => {
-					if (customer_checkin.customer_guid === checkin.customer_guid) return;	// same customer, ignore
-					let checkin_start = parseISO(checkin.postdate);
-					let checkin_end = parseISO(checkin.time_out);
-					if (customer_end >= checkin_start && customer_start <= checkin_end) {
-						// we've got some overlap
-						if (customer_list[checkin.customer_guid] === undefined) {
-							customer_list[checkin.customer_guid] = {
-								name: checkin.name,
-								checkins: []
-							};
-						}
-
-						// get duration of overlap
-						let duration = null;
-						if (customer_start <= checkin_start && customer_end >= checkin_end) {
-							// entire duration of checkin
-							duration = checkin_end - checkin_start;
-						} else if (customer_start >= checkin_start && customer_end <= checkin_end) {
-							// entire duration of customer
-							duration = customer_end - customer_start;
-						} else if (customer_start >= checkin_start && customer_end >= checkin_end) {
-							// from customer start to checkin end
-							duration = checkin_end - customer_start;
-						} else if (customer_start <= checkin_start && customer_end <= checkin_end) {
-							// from checkin start to customer end
-							duration = customer_end = checkin_start;
-						}
-
-						// add some extra data
-						let extra_data = {
-							other_customer_time_in: customer_checkin.postdate,
-							other_customer_time_out: customer_checkin.time_out,
-							overlap_duration_seconds: duration / 1000
-						};
-
-						customer_list[checkin.customer_guid].checkins.push({ ...checkin, ...extra_data });
-					}
-				});
-
-			});
-
-			this.contact_result = customer_list;
+			this.contact_result = find_customer_contacts(customer);
 		},
 
 		// save the contact list to a csv file TODO: ping rgp with array of customers ids to get the actual contact info
@@ -251,7 +154,7 @@ export default {
 			let checkin_headers = [
 				"Time In",
 				"Time Out",
-				"Overlap Duration in Seconds",
+				"Overlap Duration in Minutes",
 				"Other Customer Time In",
 				"Other Customer Time Out",
 				separator
@@ -266,7 +169,7 @@ export default {
 				forEach(customer.checkins, checkin => {
 					row.push(checkin.postdate);
 					row.push(checkin.time_out);
-					row.push(checkin.overlap_duration_seconds);
+					row.push(checkin.overlap_duration_minutes);
 					row.push(checkin.other_customer_time_in);
 					row.push(checkin.other_customer_time_out);
 					row.push(separator);
@@ -285,6 +188,12 @@ export default {
 			csv.save(err => {
 				if (err) this.$store.dispatch('notify/notify', { msg: err });
 			});
+		}
+	},
+
+	filters: {
+		number(n) {
+			return n.toLocaleString();
 		}
 	}
 }
