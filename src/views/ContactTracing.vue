@@ -20,25 +20,25 @@
 
 				<v-tabs v-model="tab" centered grow background-color="transparent">
 					<v-tab>
-						Full Data Export
-					</v-tab>
-					<v-tab>
 						Contact with Customer
 					</v-tab>
 					<v-tab>
 						Date Ranges
 					</v-tab>
+					<v-tab>
+						Full Data Export
+					</v-tab>
 				</v-tabs>
 
 				<v-tabs-items v-model="tab" class="transparent" >
-					<v-tab-item>
-						<data-export />
-					</v-tab-item>
 					<v-tab-item>
 						<customer-search />
 					</v-tab-item>
 					<v-tab-item>
 						<date-range-search />
+					</v-tab-item>
+					<v-tab-item>
+						<data-export />
 					</v-tab-item>
 				</v-tabs-items>
 
