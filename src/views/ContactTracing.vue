@@ -61,7 +61,12 @@ export default {
 
 	data: () => ({
 		tab: null
-	})
+	}),
+
+	beforeDestroy() {
+		// clear message if there is one
+		this.$store.dispatch('checkins/set_rgp_message', "");
+	}
 }
 </script>
 
