@@ -1,6 +1,7 @@
 const { dialog } = require('electron').remote;
 import { writeFile } from 'fs';
 import { forEach } from 'lodash';
+import store from '@/store/store.js';
 
 export default class {
 	constructor() {
@@ -85,6 +86,75 @@ export default class {
 		s = s + '';	// make sure we treat this as a string
 		s = s.replace('"', '"""');
 		return `"${s}"`;
+	}
+
+
+	// export a standard contact list
+	export_contact_list(contact_list) {
+		this.set_default_path("contact-list.csv");
+		let max_checkins = 1;	// used to add extra column headers
+		const separator = "----------";
+		const headers = [
+			"Customer GUID",
+			"Name",
+			"Email",
+			"Home Phone",
+			"Work Phone",
+			"Cell Phone",
+			"Address 1",
+			"Address 2",
+			"City",
+			"State",
+			"Postal Code",
+			"Country"
+		];
+		const checkin_headers = [
+			"Time In",
+			"Time Out",
+			"Overlap Duration in Minutes",
+			"Other Customer Time In",
+			"Other Customer Time Out",
+			separator
+		];
+
+		forEach(contact_list, (customer, customer_guid) => {
+			let row = [];
+			max_checkins = Math.max(max_checkins, customer.checkins.length);
+			row.push(customer_guid);
+			row.push(customer.name);
+			row.push(customer.email);
+			row.push(customer.home_phone);
+			row.push(customer.work_phone);
+			row.push(customer.cell_phone);
+			row.push(customer.address1);
+			row.push(customer.address2);
+			row.push(customer.city);
+			row.push(customer.state);
+			row.push(customer.zip);
+			row.push(customer.country);
+
+			forEach(customer.checkins, checkin => {
+				row.push(checkin.postdate);
+				row.push(checkin.time_out);
+				row.push(checkin.overlap_duration_minutes);
+				row.push(checkin.other_customer_time_in);
+				row.push(checkin.other_customer_time_out);
+				row.push(separator);
+			});
+
+			this.add_row(row);
+		});
+
+		// add extra headers as needed
+		for (let i = 0; i < max_checkins; i++) {
+			headers.push(...checkin_headers);
+		}
+
+		this.set_headers(headers);
+
+		this.save(err => {
+			if (err) store.dispatch('notify/notify', { msg: err });
+		});
 	}
 
 
