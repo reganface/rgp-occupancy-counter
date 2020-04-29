@@ -15,7 +15,8 @@ export const state = {
 	in_gym_only: true,
 	refresh_interval: null,
 	refresh_rate: 20000,		// how often to ping rgp for new check-ins (in milliseconds)
-	last_updated: format(new Date(), 'yyyy-MM-dd 00:00:00')		// for clients to sync with master - defaults to the start of today
+	last_updated: format(new Date(), 'yyyy-MM-dd 00:00:00'),		// for clients to sync with master - defaults to the start of today
+	rgp_message: ""
 };
 
 
@@ -48,7 +49,8 @@ export const getters = {
 	},
 	in_gym_only: state => state.in_gym_only,	// flag to filter out customers that are no longer in the gym
 	last_checkin_id: state => Math.max(...Object.keys(state.checkins), 0),	// used by master only
-	last_updated: state => state.last_updated	// used by client only
+	last_updated: state => state.last_updated,	// used by client only
+	rgp_message: state => state.rgp_message
 };
 
 
@@ -213,6 +215,10 @@ export const actions = {
 
 	set_in_gym_only: (store, value) => {
 		store.commit('SET_IN_GYM_ONLY', value);
+	},
+
+	set_rgp_message: (store, value) => {
+		store.commit('SET_RGP_MESSAGE', value);
 	}
 };
 
@@ -237,6 +243,10 @@ export const mutations = {
 
 	SET_LAST_UPDATED: (state, value) => {
 		state.last_updated = value;
+	},
+
+	SET_RGP_MESSAGE: (state, value) => {
+		state.rgp_message = value;
 	}
 };
 

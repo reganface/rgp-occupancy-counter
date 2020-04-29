@@ -33,7 +33,9 @@ export function update(params) {
 
 
 // GET
-export async function get(path, params) {
+// if return_response is true and there is an exception, return the entire response object
+// otherwise a simple exception message will be generated
+export async function get(path, params, return_response) {
 	try {
 		store.dispatch('start_loading');
 		let response = await api_client.get(path, { params: params });
@@ -42,7 +44,7 @@ export async function get(path, params) {
 	} catch (response) {
 		let msg = response.status ? `${response.status} - ${response.data.message}` : response;
 		store.dispatch('notify/notify', { msg });
-		return reject(msg);
+		return reject(return_response ? response : msg);
 	} finally {
 		store.dispatch('stop_loading');
 	}
