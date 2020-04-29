@@ -79,12 +79,31 @@
 				<v-row>
 					<v-col>
 						There are {{ contact_count | number }} customers that have overlapping check-ins with <span class="font-weight-bold">{{ selected_customer }}</span>
-						You can export a contact list along with each customer's overlapping check-in.
+						You can export a contact list along with each customer's overlapping check-in.  Up to date contact info will be pulled from RGP.
 					</v-col>
 					<v-col cols="auto">
 						<v-btn @click="export_contact_list" color="primary">
 							Export Contact List
 						</v-btn>
+					</v-col>
+				</v-row>
+
+				<v-row v-if="contact_count >= 250">
+					<v-col>
+						<v-alert type="warning" outlined>
+							Due to the size of this list, it's possible we will hit RGP's rate limit for their API.
+							As a result, this may take several minutes to acquire all contact info.
+							You may also see a "429 - Too Many Requests" error pop up during this time, which is normal.
+							As soon as all data has been collected, the Save File dialog will pop up.
+						</v-alert>
+
+					</v-col>
+				</v-row>
+
+				<v-row v-if="rgp_message">
+					<v-col>
+						{{ rgp_message }}
+						<v-progress-circular v-if="rgp_loading" indeterminate />
 					</v-col>
 				</v-row>
 			</div>
@@ -94,7 +113,7 @@
 </template>
 
 <script>
-import { lookup_customer, find_customer_contacts } from '@/services/contact-search.js';
+import { lookup_customer, find_customer_contacts, get_customer_contact_info } from '@/services/contact-search.js';
 import { forEach, isEmpty } from 'lodash';
 import Export from '@/services/export.js';
 
@@ -103,7 +122,8 @@ export default {
 		customer: "",
 		search_result: {},
 		contact_result: {},
-		selected_customer: ""
+		selected_customer: "",
+		rgp_loading: false
 	}),
 
 	computed: {
@@ -113,6 +133,10 @@ export default {
 
 		contact_count() {
 			return Object.keys(this.contact_result).length;
+		},
+
+		rgp_message() {
+			return this.$store.getters['checkins/rgp_message'];
 		}
 	},
 
@@ -142,14 +166,24 @@ export default {
 		},
 
 		// save the contact list to a csv file TODO: ping rgp with array of customers ids to get the actual contact info
-		export_contact_list() {
+		async export_contact_list() {
 			const csv = new Export();
 			csv.set_default_path("contact-list.csv");
 			let max_checkins = 1;	// used to add extra column headers
 			const separator = "----------";
 			let headers = [
 				"Customer GUID",
-				"Name"
+				"Name",
+				"Email",
+				"Home Phone",
+				"Work Phone",
+				"Cell Phone",
+				"Address 1",
+				"Address 2",
+				"City",
+				"State",
+				"Postal Code",
+				"Country"
 			];
 			let checkin_headers = [
 				"Time In",
@@ -160,11 +194,26 @@ export default {
 				separator
 			];
 
+			// update the list with contact info from RGP
+			this.rgp_loading = true;
+			this.contact_result = await get_customer_contact_info(this.contact_result);
+			this.rgp_loading = false;
+
 			forEach(this.contact_result, (customer, customer_guid) => {
 				let row = [];
 				max_checkins = Math.max(max_checkins, customer.checkins.length);
 				row.push(customer_guid);
 				row.push(customer.name);
+				row.push(customer.email);
+				row.push(customer.home_phone);
+				row.push(customer.work_phone);
+				row.push(customer.cell_phone);
+				row.push(customer.address1);
+				row.push(customer.address2);
+				row.push(customer.city);
+				row.push(customer.state);
+				row.push(customer.zip);
+				row.push(customer.country);
 
 				forEach(customer.checkins, checkin => {
 					row.push(checkin.postdate);
@@ -195,6 +244,11 @@ export default {
 		number(n) {
 			return n.toLocaleString();
 		}
+	},
+
+	beforeDestroy() {
+		// clear message if there is one
+		this.$store.dispatch('checkins/set_rgp_message', "");
 	}
 }
 </script>

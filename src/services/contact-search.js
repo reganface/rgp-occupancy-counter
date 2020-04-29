@@ -1,6 +1,9 @@
+import { resolve } from 'q';
 import { config } from '@/services/db.js';
 import { forEach } from 'lodash';
 import { parseISO } from 'date-fns';
+import { get } from '@/services/ajax.js';
+import store from '@/store/store.js';
 
 // take a partial name search and return a list of possible matches
 export const lookup_customer = search => {
@@ -115,4 +118,88 @@ export const date_range_contacts = (dates, ignore_guid) => {
 	});
 
 	return customer_list;
+}
+
+
+// get all customer guids in the list and get their contact info from RGP
+export const get_customer_contact_info = async customer_list => {
+	// this end point has a limit to the amount of guids you can request at once
+	// we need to split up the array into chunks and perform multiple requests
+	const limit = 25;
+	let guid_array = Object.keys(customer_list);
+	let guids = [];
+	let total_customers = guid_array.length;
+	let total_downloaded = 0;
+
+	// create array of comma separated guids
+	for (let i = 0; i < total_customers; i += limit) {
+		guids.push(guid_array.slice(i, i+limit).join());
+	}
+
+	// loop through each guid list and get contact info
+	for (const guid_list of guids) {
+		// set message
+		let msg = `Getting contact info from RGP. ${total_downloaded} of ${total_customers} downloaded...`;
+		store.dispatch('checkins/set_rgp_message', msg);
+
+		// it's very possible we can hit the api rate limit here for a large list
+		// if we do, wait a bit, then try again
+		let exit = false;
+		do {
+			try {
+				// use var here so result is hoisted out of this try block
+				var result = await get('/customers', { customerGuid: guid_list }, true);
+				exit = true;
+			}
+			catch (response) {
+				if (response.status == 429) {
+					// we've hit the rate limit, retry again after 15 second delay
+					let msg = `Rate limit reached, resuming in roughly 60 seconds... ${total_downloaded} of ${total_customers} downloaded...`;
+					store.dispatch('checkins/set_rgp_message', msg);
+					await delay(15000);
+				}
+				else {
+					// this was a different error, don't try again
+					exit = true;
+				}
+			}
+		} while (!exit);
+
+		// use reduce to loop through all customer data we just got
+		// take the needed contact info
+		// and add in the name/check-in info already in customer_list
+		let contact_info = result.customer.reduce((new_data, customer) => ({
+			[customer.customerGuid]: {
+				address1: customer.address1,
+				address2: customer.address2,
+				city: customer.city,
+				state: customer.state,
+				zip: customer.zip,
+				country: customer.country,
+				email: customer.email,
+				home_phone: customer.homePhone,
+				work_phone: customer.workPhone,
+				cell_phone: customer.cellPhone,
+				...customer_list[customer.customerGuid]
+			},
+			...new_data
+		}), {});
+
+		// update the customer_list object
+		Object.assign(customer_list, contact_info);
+
+		// update count
+		total_downloaded = Math.min(total_downloaded + limit, total_customers);
+	}
+
+	// set message
+	store.dispatch('checkins/set_rgp_message', "All contact info downloaded.");
+	return resolve(customer_list);
+
+}
+
+
+// helper function to be able to use setTimeout with async/await
+function delay(x) {
+	return new Promise(resolve => setTimeout(resolve, x));
 }
