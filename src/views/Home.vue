@@ -42,17 +42,7 @@
 					<template>
 						<tr v-for="item in items" :key="item.checkin_id" :class="{inactive: item.time_out, 'animate-table-item': !disable_transitions}">
 							<td>{{ item.postdate | checkin_time }}</td>
-							<td>
-								<!-- display button to allow manual name lookup when it failed previously -->
-								<div v-if="item.name == '####'" class="red--text font-italic font-weight-light">
-									Error loading name
-									<v-btn @click="load_name(item)" icon small>
-										<v-icon>mdi-refresh</v-icon>
-									</v-btn>
-								</div>
-
-								<div v-else>{{ item.name }}</div>
-							</td>
+							<td>{{ item.name }}</td>
 							<td>{{ item.details }}</td>
 							<td :class="{'red--text': check_duration(item)}">{{ time_in_gym(item) }}</td>
 							<td class="text-center">
@@ -161,11 +151,6 @@ export default {
 
 		empty(obj) {
 			return isEmpty(obj);
-		},
-
-		// allows manual lookup of check-in name
-		load_name(checkin) {
-			this.$store.dispatch('checkins/get_name', checkin);
 		},
 
 		// determin if this checkin is beyond the max duration

@@ -2,7 +2,6 @@ import { config, sync_object } from '@/services/db.js';
 import { forEach } from 'lodash';
 import { format, parseISO } from 'date-fns';
 import { get, post } from '@/services/ajax.js';
-import { resolve, reject } from 'q';
 let today = format(new Date(), 'yyyy-MM-dd');
 
 export const namespaced = true;
@@ -91,23 +90,45 @@ export const actions = {
 		let params = {
 			startDateTime: format(new Date(), 'yyyy-MM-dd 00:00:00'),
 			endDateTime: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-			startId: last_checkin_id
+			startId: last_checkin_id,
+			customerDetails: true
 		};
 		let result = await get(`/checkins/facility/${location_tag}`, params);
 		let checkins = {};
 		forEach(result.checkins, value => {
-			checkins[value.checkinId] = {
-				checkin_id: value.checkinId,
-				customer_guid: value.customerGuid,
-				name: value.remoteCustomerName ? value.remoteCustomerName : "",
-				details: value.details,
-				postdate: value.postDate,
+			let checkin = value.checkin;
+			let customer = value.customer;
+
+			// RGP currently returns check-ins to remote facilities, but this is not what we want
+			// filter out any check-ins that aren't at the selected facility
+			if (checkin.whereDatabaseTag != location_tag) return;
+
+			// currently, RGP does not return customer details of some remote customers aside from name
+			// the guid and name should be set accordingly
+			let name, customer_guid;
+			if (!checkin.customerGuid) {
+				// is a remote customer with no info
+				// give them a fake guid with their home gym tag followed by the remote customer id
+				// example AAA-255267
+				name = checkin.remoteCustomerName;
+				customer_guid = `${checkin.remoteDatabaseTag}-${checkin.remoteCustomerId}`;
+			} else {
+				// local customer
+				name = `${customer.lastName}, ${customer.firstName} ${customer.middleName}`.trim();
+				customer_guid = customer.customerGuid;
+			}
+
+			checkins[checkin.checkinId] = {
+				checkin_id: checkin.checkinId,
+				customer_guid: customer_guid,
+				name: name,
+				details: checkin.details,
+				postdate: checkin.postDate,
 				time_out: null,
 				last_updated: format(new Date(), "yyyy-MM-dd HH:mm:ss")
 			};
 		});
 		store.commit('UPDATE_CHECKINS', checkins);
-		store.dispatch('lookup_new_names', checkins);
 	},
 
 	// get new check-ins from the master server
@@ -123,46 +144,6 @@ export const actions = {
 
 		store.commit('UPDATE_CHECKINS', checkins);
 		store.commit('SET_LAST_UPDATED', new_time);
-	},
-
-	// loop through list of check-ins that need customer name lookups
-	lookup_new_names: async (store, checkins) => {
-		let checkins_array = Object.values(checkins);
-		let need_names = checkins_array.filter(checkin => checkin.customer_guid && !checkin.name);
-		let count = need_names.length;
-		let lookup_delay = count > 10 ? 4500 : 1500;
-
-		// loop through all checkins that need a name
-		for (const need_name of need_names) {
-			try {
-				await store.dispatch('get_name', need_name);
-				await delay(lookup_delay);
-			} catch (err) {
-				// most likely hit the API rate limit, extra delay
-				await delay(65000);
-			}
-		}
-	},
-
-	// get a customer name from RGP for a specific check-in
-	get_name: async (store, checkin) => {
-		let now = format(new Date(), "yyyy-MM-dd HH:mm:ss");
-		let error = false;
-		try {
-			let result = await get(`/customers/${checkin.customer_guid}`);	// fetch name from api
-			let customer = result.customer;
-			checkin.name = `${customer.lastName}, ${customer.firstName} ${customer.middleName}`.trim();
-			checkin.last_updated = now;
-		} catch (err) {
-			checkin.name = "####";
-			error = true;
-		} finally {
-			let checkin_object = { [checkin.checkin_id]: checkin };		// turn array into object in order to update the global checkin object
-			store.commit('UPDATE_CHECKINS', checkin_object);
-		}
-
-		if (error) return reject();
-		return resolve();
 	},
 
 	// add a check-out time to a specific check-in
@@ -249,9 +230,3 @@ export const mutations = {
 		state.rgp_message = value;
 	}
 };
-
-
-// helper function to be able to use setTimeout with async/await
-function delay(x) {
-	return new Promise(resolve => setTimeout(resolve, x));
-}
