@@ -153,10 +153,10 @@ export const get_customer_contact_info = async customer_list => {
 			}
 			catch (response) {
 				if (response.status == 429) {
-					// we've hit the rate limit, retry again after 15 second delay
+					// we've hit the rate limit, retry again after 20 second delay... though it will probably take 60 seconds to resume
 					let msg = `Rate limit reached, resuming in roughly 60 seconds... ${total_downloaded} of ${total_customers} downloaded...`;
 					store.dispatch('checkins/set_rgp_message', msg);
-					await delay(15000);
+					await delay(20000);
 				}
 				else {
 					// this was a different error, don't try again

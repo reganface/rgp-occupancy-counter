@@ -114,7 +114,7 @@
 
 <script>
 import { lookup_customer, find_customer_contacts, get_customer_contact_info } from '@/services/contact-search.js';
-import { forEach, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import Export from '@/services/export.js';
 
 export default {
@@ -165,78 +165,18 @@ export default {
 			this.contact_result = find_customer_contacts(customer);
 		},
 
-		// save the contact list to a csv file TODO: ping rgp with array of customers ids to get the actual contact info
+		// save the contact list to a csv file
 		async export_contact_list() {
 			const csv = new Export();
-			csv.set_default_path("contact-list.csv");
-			let max_checkins = 1;	// used to add extra column headers
-			const separator = "----------";
-			let headers = [
-				"Customer GUID",
-				"Name",
-				"Email",
-				"Home Phone",
-				"Work Phone",
-				"Cell Phone",
-				"Address 1",
-				"Address 2",
-				"City",
-				"State",
-				"Postal Code",
-				"Country"
-			];
-			let checkin_headers = [
-				"Time In",
-				"Time Out",
-				"Overlap Duration in Minutes",
-				"Other Customer Time In",
-				"Other Customer Time Out",
-				separator
-			];
 
 			// update the list with contact info from RGP
 			this.rgp_loading = true;
 			this.contact_result = await get_customer_contact_info(this.contact_result);
 			this.rgp_loading = false;
 
-			forEach(this.contact_result, (customer, customer_guid) => {
-				let row = [];
-				max_checkins = Math.max(max_checkins, customer.checkins.length);
-				row.push(customer_guid);
-				row.push(customer.name);
-				row.push(customer.email);
-				row.push(customer.home_phone);
-				row.push(customer.work_phone);
-				row.push(customer.cell_phone);
-				row.push(customer.address1);
-				row.push(customer.address2);
-				row.push(customer.city);
-				row.push(customer.state);
-				row.push(customer.zip);
-				row.push(customer.country);
+			// export the list
+			csv.export_contact_list(this.contact_result);
 
-				forEach(customer.checkins, checkin => {
-					row.push(checkin.postdate);
-					row.push(checkin.time_out);
-					row.push(checkin.overlap_duration_minutes);
-					row.push(checkin.other_customer_time_in);
-					row.push(checkin.other_customer_time_out);
-					row.push(separator);
-				});
-
-				csv.add_row(row);
-			});
-
-			// add extra headers as needed
-			for (let i = 0; i < max_checkins; i++) {
-				headers.push(...checkin_headers);
-			}
-
-			csv.set_headers(headers);
-
-			csv.save(err => {
-				if (err) this.$store.dispatch('notify/notify', { msg: err });
-			});
 		}
 	},
 
@@ -244,11 +184,6 @@ export default {
 		number(n) {
 			return n.toLocaleString();
 		}
-	},
-
-	beforeDestroy() {
-		// clear message if there is one
-		this.$store.dispatch('checkins/set_rgp_message', "");
 	}
 }
 </script>
