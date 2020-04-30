@@ -11,9 +11,12 @@ When you open the program for the first time, you'll need to go through a quick 
 </p>
 
 ### Master
-Master is where all data is stored, and also acts as a server to sync data between all clients.  The Master needs to be running for any clients to work.  There should only be one Master setup (one per location, if you have multiple locations).
+Master is where all data is stored, and also acts as a server to sync data between all clients.  The Master needs to be running for any clients to work.  There should only be one Master configured and running (one per location, if you have multiple locations).  The rest should be configured as Clients.
 
 You'll need to enter your API username and key that you have from RGP.  Don't know where to get that info?  See this [Google Doc](https://docs.google.com/document/d/1J_r1QkUphSsaPa-KdqsUv0xd7r39qp3M4169ouv6rXc/edit) from RGP on how to generate your API key.  You should not need to change the default URL listed in the `RGP API Base URL` field.  Clicking `Next` will check your API key.  If you get an error here, check that your username and key were entered correctly.  Next select the facility you are setting up from the drop down list and click `Finish`.  Setup is now complete!
+<p align="center">
+	<img src="images/setup-master.png">
+</p>
 
 **Note:** *The first time you open the program, you may get a Windows Firewall popup asking if you want to allow this application through the firewall.  Select Yes if you plan on running this on multiple computers.  If you dismiss this prompt, clients will not be able to connect until you manually add an exception in your firewall.*
 
@@ -31,6 +34,9 @@ Once you have a Master configured and running at your location, you can install 
 
 ## Main View (Check-Ins)
 The main page shows a list of check-ins pulled from RGP.  This list will automatically get any new check-ins every 20 seconds.  This view will be very similar to what is displayed in RGP's Check-In Module with a couple of differences.
+<p align="center">
+	<img src="images/check-ins.png">
+</p>
 
 ### Visit Duration
 The Check-In List has a column for `Duration`.  This is the amount of time the customer has been in the gym.  This time will be highlighted in red if they have been there longer than your max duration time (editable in settings).
@@ -43,6 +49,9 @@ By default, only customers that are currently in the facility will be displayed 
 
 ### Occupancy
 The menu bar at the top of the screen will display the number of customers currently in the gym.  This number will be highlighted in red if it is at, or above, your set max occupancy (editable in settings).
+
+### Filter Customers
+The text field at the top of the Check-In list allows you to quickly filter the list of customers.  Search is the same format as RGP - lastname, firstname - and the list will be updated as you type.
 
 ## Settings
 Clicking the gear icon at the top right of the menu bar will bring you to the settings page.  Some settings differ between the Master and Client
@@ -63,12 +72,13 @@ There are a few different reports available to help with Contact Tracing
 
 ### Contact With Customer
 Here you can look up a single customer and get back a contact list of all customers that were in the gym at the same time.
-TODO
+1. To start, enter the name (or part of the name) of a customer and click the search button
+2. Click on the name you want from the result list of customers
+3. The Occupancy Counter will then find customers who have overlapping check-ins with the selected customer
+4. Click `Export Contact List` to save a CSV file of these customers, their contact info, and their overlapping check-ins.  This can take anywhere from a few seconds to several minutes as contact info needs to be downloaded from RGP's API.
 
 ### Date Ranges
-Provide one or more date and time ranges, and get a contact list of all customers who were in the facility during any of those times.
-TODO
+The `Date Ranges` report functions much like `Contact with Customer` report.  However, instead of searching for a single customer, you will input one or more time ranges on specific days.  A contact list will be generated of customers who have overlapping check-ins with your provided times.
 
 ### Full Data Export
-Export all the raw check-in/check-out data that is stored in this application.  Contact info is not automatically retrieved here.
-TODO
+This is a simple data export.  Enter start and end dates and click `Save as .CSV`.  A list of all check-ins between those dates will be generated, along with their check-out times.  No contact info is retrieved in this report.
