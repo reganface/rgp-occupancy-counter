@@ -6,6 +6,9 @@ TODO
 
 ## Setup
 When you open the program for the first time, you'll need to go through a quick setup.  There are two types of installations; Master and Client.
+<p align="center">
+	<img src="images/setup.png">
+</p>
 
 ### Master
 Master is where all data is stored, and also acts as a server to sync data between all clients.  The Master needs to be running for any clients to work.  There should only be one Master setup (one per location, if you have multiple locations).
