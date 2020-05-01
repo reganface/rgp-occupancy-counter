@@ -68,7 +68,7 @@ Clicking the gear icon at the top right of the menu bar will bring you to the se
 | Reset Configuration (*Advanced - Client Only*) | This will disconnect the Client from the Master and put it back into Setup mode.  No data is stored on the client, so no data is deleted in this process |
 
 ## Contact Tracing
-There are a few different reports available to help with Contact Tracing
+There are a few different reports available to help with Contact Tracing.  *Contact tracing reports are only available on the Master - clients do not have access*
 
 ### Contact With Customer
 Here you can look up a single customer and get back a contact list of all customers that were in the gym at the same time.
