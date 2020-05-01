@@ -6,10 +6,10 @@
 
 		<transition :name="disable_transitions ? '' : 'fade'" mode="out-in">
 			<!-- customer search box -->
-			<v-row v-if="empty(search_result) && empty(contact_result)" key="main">
+			<v-row v-if="empty(search_result) && empty(contact_result) && !reference_id" key="main">
 				<v-col>
 					<v-form @submit.prevent="search_customer">
-						<v-text-field v-model="customer" label="[Last Name, First Name]">
+						<v-text-field v-model="customer" label="[Last Name, First Name]" hint="Press Enter to search">
 							<template v-slot:append-outer>
 								<v-btn type="submit" color="primary" small>
 									<v-icon>mdi-account-search</v-icon>
@@ -58,7 +58,7 @@
 
 
 			<!-- contact search results -->
-			<div v-else-if="!empty(contact_result)" key="contact">
+			<div v-else-if="!empty(contact_result) || reference_id" key="contact">
 				<!-- back button -->
 				<v-row>
 					<v-col>
@@ -71,14 +71,14 @@
 
 				<v-row>
 					<v-col class="text-center title font-weight-light">
-						<span class="font-weight-bold">{{ contact_count | number }}</span> customers found
+						<span class="font-weight-bold">{{ master ? contact_count : reference_count | number }}</span> customers found
 					</v-col>
 				</v-row>
 
 				<!-- contact result/export -->
 				<v-row>
 					<v-col>
-						There are {{ contact_count | number }} customers that have overlapping check-ins with <span class="font-weight-bold">{{ selected_customer }}</span>
+						There are {{ master ? contact_count : reference_count | number }} customers that have overlapping check-ins with <span class="font-weight-bold">{{ selected_customer }}</span>
 						You can export a contact list along with each customer's overlapping check-in.  Up to date contact info will be pulled from RGP.
 					</v-col>
 					<v-col cols="auto">
@@ -88,7 +88,7 @@
 					</v-col>
 				</v-row>
 
-				<v-row v-if="contact_count >= 250">
+				<v-row v-if="contact_count >= 250 || reference_count >= 250">
 					<v-col>
 						<v-alert type="warning" outlined>
 							Due to the size of this list, it's possible we will hit RGP's rate limit for their API.
@@ -116,6 +116,7 @@
 import { lookup_customer, find_customer_contacts, get_customer_contact_info } from '@/services/contact-search.js';
 import { isEmpty } from 'lodash';
 import Export from '@/services/export.js';
+import { get } from '@/services/ajax.js';
 
 export default {
 	data: () => ({
@@ -123,7 +124,9 @@ export default {
 		search_result: {},
 		contact_result: {},
 		selected_customer: "",
-		rgp_loading: false
+		rgp_loading: false,
+		reference_id: null,
+		reference_count: 0
 	}),
 
 	computed: {
@@ -137,6 +140,10 @@ export default {
 
 		rgp_message() {
 			return this.$store.getters['checkins/rgp_message'];
+		},
+
+		master() {
+			return this.$store.getters['setup/master'];
 		}
 	},
 
@@ -150,32 +157,62 @@ export default {
 			this.search_result = {};
 			this.contact_result = {};
 			this.selected_customer = "";
+			this.reference_id = null;
+			this.reference_count = 0;
 		},
 
 		// search for a specific customer from our check-ins
-		search_customer() {
-			this.search_result = lookup_customer(this.customer);
+		async search_customer() {
+			if (this.master) {
+				this.search_result = lookup_customer(this.customer);
+			} else {
+				// reqeust search from the master
+				let result = await get('/lookup-customer', { search: this.customer });
+				this.search_result = result.customers;
+			}
+
 		},
 
 		// customer selected, now search for all customers that had overlapping check-ins with this customer
-		select_customer(customer) {
+		async select_customer(customer) {
+			if (this.master) {
+				this.contact_result = find_customer_contacts(customer);
+			} else {
+				// request lookup from master with the customer guid
+				// we just get a reference id back here
+				let result = await get('/customer-contacts', { customer_guid: customer.customer_guid });
+				this.reference_id = result.reference_id;
+				this.reference_count = result.contact_count;
+			}
+
 			this.search_result = {};	// clear customer search
 			this.customer = "";
 			this.selected_customer = customer.name;
-			this.contact_result = find_customer_contacts(customer);
+
 		},
 
 		// save the contact list to a csv file
 		async export_contact_list() {
 			const csv = new Export();
-
-			// update the list with contact info from RGP
 			this.rgp_loading = true;
-			this.contact_result = await get_customer_contact_info(this.contact_result);
+
+			if (this.master) {
+				// update the list with contact info from RGP
+				this.contact_result = await get_customer_contact_info(this.contact_result);
+			} else {
+				// reqeust this from master with the reference id
+				this.contact_result = await get('/contact-info', { reference_id: this.reference_id });
+				if (this.contact_result.error) {
+					// there was an error
+					this.$store.dispatch('notify/notify', { msg: this.contact_result.error });
+					this.clear_search();
+				}
+			}
+
 			this.rgp_loading = false;
 
-			// export the list
-			csv.export_contact_list(this.contact_result);
+			// export the list if there was no error
+			if (!this.contact_result.error) csv.export_contact_list(this.contact_result);
 
 		}
 	},

@@ -1,5 +1,6 @@
 import store from '@/store/store.js';
 import { parseISO } from 'date-fns';
+import * as contact_search from '@/services/contact-search.js';
 import express from 'express';
 const app = express();
 let server = null;
@@ -63,6 +64,43 @@ app.get('/settings', (request, response) => {
 	let max_duration = store.getters['setup/max_duration'];
 	let max_customers = store.getters['setup/max_customers'];
 	response.send({ max_duration, max_customers });
+});
+
+
+// contact tracing from client - customer search
+app.get('/lookup-customer', (request, response) => {
+	let search = request.query.search;
+	let customers = contact_search.lookup_customer(search);
+	response.send({ customers });
+});
+
+
+// contact tracing from client - search customers with overlapping check-ins
+app.get('/customer-contacts', (request, response) => {
+	let customer_guid = request.query.customer_guid;
+	let customer = contact_search.get_customer_from_guid(customer_guid);
+	let contact_result = contact_search.find_customer_contacts(customer);
+
+	// store result in cache
+	let reference_id = contact_search.add_cache(contact_result);
+	let contact_count = Object.keys(contact_result).length;
+
+	response.send({ reference_id, contact_count });
+});
+
+
+// contact tracing from client - lookup contact info from RGP
+app.get('/contact-info', async (request, response) => {
+	let reference_id = request.query.reference_id;
+	let contact_result = contact_search.get_cache(reference_id);
+
+	// no result set found
+	if (!contact_result) {
+		response.send({ error: "Result set not found. Search results are only cached for 10 minutes. Please run your search again" });
+	} else {
+		contact_result = await contact_search.get_customer_contact_info(contact_result);
+		response.send({ contact_result });
+	}
 });
 
 

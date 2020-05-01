@@ -5,6 +5,8 @@ import { parseISO } from 'date-fns';
 import { get } from '@/services/ajax.js';
 import store from '@/store/store.js';
 
+let search_cache = {};	// stores searches from clients
+
 // take a partial name search and return a list of possible matches
 export const lookup_customer = search => {
 	// if the search is an empty string, return
@@ -28,7 +30,7 @@ export const lookup_customer = search => {
 
 			if (last_test && first_test) {
 				// we've got a match!
-				// store the customer in an object as an array of all their check-ins
+				// store the customer in an object with an array of all their check-ins
 
 				// check if we've come across this customer already
 				if (customer_list[checkin.customer_guid] === undefined) {
@@ -60,6 +62,36 @@ export const find_customer_contacts = customer => {
 
 	// use date range contacts functions to do the contact serach
 	return date_range_contacts(dates, customer.customer_guid);
+}
+
+
+// lookup check-ins by customer guid
+// only used when doing contact tracing from a client
+export const get_customer_from_guid = customer_guid => {
+	let customer_list = {};
+	let all_checkins = config.get('checkins');
+
+	forEach(all_checkins, checkins => {
+		// looping through each day of check-ins
+		forEach(checkins, checkin => {
+			// looping through each check-in for this day
+			if (customer_guid != checkin.customer_guid) return;	// no match
+
+			// match - store the customer in an object with an array of all their check-ins
+			// check if we've come across this customer already
+			if (customer_list[customer_guid] === undefined) {
+				// first time seeing the  customer
+				customer_list[customer_guid] = {
+					name: checkin.name,
+					customer_guid: customer_guid,
+					checkins: []
+				};
+			}
+			customer_list[customer_guid].checkins.push(checkin);
+		});
+	});
+
+	return customer_list[customer_guid];
 }
 
 
@@ -196,6 +228,66 @@ export const get_customer_contact_info = async customer_list => {
 	store.dispatch('checkins/set_rgp_message', "All contact info downloaded.");
 	return resolve(customer_list);
 
+}
+
+
+
+// Search Cache
+// When a client requests a contact search, we store the data temporarily in search_cache.
+// This is data that would normally get sent back and forth a couple times between functions on the Master.
+// This dataset can be large, so lets avoid that over a network connection.
+// Instead we send back meta data and the results are stored here.
+// The garbage collector will remove anything over 10 minutes old
+
+// loop through search cache, remove anything older than 10 minutes
+const garbage_collector = () => {
+	console.log("garbage checking...", Object.keys(search_cache));
+	let max_life = 90000;	// 10 minutes in milliseconds
+	forEach(search_cache, (cache, reference_id) => {
+		if (new Date() - cache.touched > max_life) {
+			console.log("garbage collecting!", reference_id);
+			remove_cache(reference_id);
+		}
+	})
+}
+
+// set the garbage collector running
+setInterval(garbage_collector, 60000);	// run every minute
+
+
+// add new entry to cache
+export const add_cache = data => {
+	let reference_id = null;
+	do {
+		// generate a random id and make sure it doesn't already exist
+		reference_id = Math.random().toString(36).substring(2, 15);
+	} while (search_cache[reference_id] !== undefined);
+
+	search_cache[reference_id] = {
+		touched: new Date(),
+		data
+	}
+
+	return reference_id;
+}
+
+// update the last time this entry was accessed to avoid garbage collection
+export const touch_cache = reference_id => {
+	search_cache[reference_id].touched = new Date();
+}
+
+// get the data in the cache
+export const get_cache = reference_id => {
+	if (search_cache[reference_id] !== undefined) {
+		search_cache[reference_id].touched = new Date();
+		return search_cache[reference_id].data;
+	}
+	return false;
+}
+
+// remove an entry from cache
+export const remove_cache = reference_id => {
+	delete(search_cache[reference_id]);
 }
 
 
