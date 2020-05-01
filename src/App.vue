@@ -9,7 +9,7 @@
 
 			<v-spacer />
 
-			<v-btn :to="{name: 'tracing'}" icon title="Contact Tracing" x-large>
+			<v-btn v-if="master" :to="{name: 'tracing'}" icon title="Contact Tracing" x-large>
 				<v-icon>mdi-account-network</v-icon>
 			</v-btn>
 
@@ -68,7 +68,7 @@ export default {
 		},
 
 		master() {
-			return this.$store.getters['setup/settings'].master;
+			return this.$store.getters['setup/master'];
 		},
 
 		disable_transitions() {
