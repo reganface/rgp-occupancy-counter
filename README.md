@@ -5,7 +5,7 @@ This is a simple tool that ties into Rock Gym Pro to help keep track of how many
 You will need to generate an API key before being able to use this program.  This [Google Doc](https://docs.google.com/document/d/1J_r1QkUphSsaPa-KdqsUv0xd7r39qp3M4169ouv6rXc/edit) from RGP has instructions on how to generate your key for both cloud and locally hosted servers.  You'll be asked for this info upon initial setup.
 
 ## Download and Install
-`TODO: Add link and basic instructions to download packaged application`
+Head over to the [application page](https://reganface.github.io/rgp-occupancy-counter/) to download the installer.
 
 
 ## Building From Source
@@ -17,6 +17,9 @@ There are several technologies in use here
 You'll need [NodeJS](https://nodejs.org) installed.  I've only tested it on 8.x.x so far.
 
 Once you've downloaded the repo, you'll need to install any dependencies with `npm install`.  After than, you can build and run a development version with hot refresh and dev tools enabled with `npm run electron:serve`.
+
+## Build for Production
+When you're ready to build a production version, run `npm run electron:build`.  The setup .exe file that gets created in the /dist_electron directory will be all you need to install the application.
 
 
 # Goals
@@ -30,8 +33,5 @@ Once you've downloaded the repo, you'll need to install any dependencies with `n
 # TODO
 - Polish up and test current features.  Add in any missing error handlers.
 - Data is being stored in a JSON file via Electron-Store.  Stress test this with a year's worth of check-ins
-- Implement solution(s) for contact tracing
-- If RGP's check-in API is updated to include customer details, remove the customer lookup functions
-- Encrypt api key for storage?  There is an NPM package that can use the built in Windows Data Protection API so that it could be encrypted by the user profile. `windows.security.cryptography.dataprotection`
 - Add some UI indication on whether the current instance is setup as master or client.  Also connection status and info?
-- Tweak production build settings for electron-builder.  Seems to be building multiple package styles right now.
+- Allow for automatic check-outs with scan cards.

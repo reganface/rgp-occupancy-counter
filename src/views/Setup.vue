@@ -59,7 +59,6 @@
 					<v-select
 						v-model="form.location_tag"
 						:items="location_select"
-						item-text="code"
 						item-value="code"
 						label="Choose Your Facility"
 					/>
@@ -149,8 +148,8 @@ export default {
 
 				// get locations
 				let result = await this.$store.dispatch('setup/get_locations');
-				this.location_select = Object.values(result);
-
+				let locations = Object.values(result);	// convert to array
+				this.location_select = locations.map(location => ({ text: `${location.name} - ${location.code}`, ...location }));	// add text field
 				this.screen = "step2"
 			} catch (err) {
 				this.error = err;
