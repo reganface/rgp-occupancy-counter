@@ -3,6 +3,7 @@
 import { app, protocol, BrowserWindow, Menu } from 'electron'
 import { createProtocol, installVueDevtools } from 'vue-cli-plugin-electron-builder/lib'
 const isDevelopment = process.env.NODE_ENV !== 'production'
+import path from 'path';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -23,7 +24,8 @@ function createWindow() {
 			nodeIntegration: true,
 			webSecurity: false		// prevent preflight cors options request
 		},
-		title: "RGP Occupancy Counter"
+		title: "RGP Occupancy Counter",
+		icon: path.join(__static, 'icon.png')
 	})
 
 	win.maximize()		// start maximized
