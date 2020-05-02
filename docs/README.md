@@ -5,6 +5,7 @@ This is a small application built on top of the RGP API to help climbing gyms du
 You can download the beta version here: [v1.0.0-beta.0](https://github.com/reganface/rgp-occupancy-counter/releases/download/v1.0.0-beta.0/RGP-Occupancy-Counter-Setup.zip)  Open up the zip file and run `RGP Occupancy Counter Setup.exe` to automatically install the application and add a desktop icon.  You can delete the zip file now.
 
 ## Known Issues
+- When starting up the application, it sometimes starts on a blank page (only on production version).  Going to `Contact Tracing` or `Settings`, and then clicking `Back` will correctly load the main page.
 - (For multi-location facilities) Contact lists that include any remote customer check-ins will not have contact info listed (email, phone, address) for those customers.  This is a limitation of the current RGP API implementation.
 
 ## Setup
