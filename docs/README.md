@@ -2,7 +2,7 @@
 This is a small application built on top of the RGP API to help climbing gyms during the limited re-opening periods after COVID-19.  It adds a Check-Out feature to help with having a customer occupancy counter, as well as making contact tracing easy.  Contact tracing reports are included.  Simply look up a customer and get a contact list of every customer who had overlapping check-ins.  Alternatively, you can provide an array of date ranges instead of a single customer.  Even if you plan on using a reservation system to control occupancy, having customers check-out of the gym will greatly help with contact tracing should a customer or staff test positive for COVID-19.
 
 ## Download & Installation
-You can download the beta version here: [v1.0.0-beta.0](https://github.com/reganface/rgp-occupancy-counter/releases/download/v1.0.0-beta.0/RGP-Occupancy-Counter-Setup.zip)  Open up the zip file and run `rgp-occupancy-counter-setup.exe` to automatically install the application and add a desktop icon.  You can delete the zip file now.
+You can download the beta version here: [v1.0.0-beta.0](https://github.com/reganface/rgp-occupancy-counter/releases/download/v1.0.0-beta.0/RGP-Occupancy-Counter-Setup.zip)  Open up the zip file and run `RGP Occupancy Counter Setup.exe` to automatically install the application and add a desktop icon.  You can delete the zip file now.
 
 ## Known Issues
 - (For multi-location facilities) Contact lists that include any remote customer check-ins will not have contact info listed (email, phone, address) for those customers.  This is a limitation of the current RGP API implementation.
